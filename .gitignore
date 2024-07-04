@@ -1,0 +1,16 @@
+db.sqlite3
+Pipfile.lock
+__pycache__/
+conf/__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.env
+student/__pycache__/
+old-templates/
+staticfiles/
+/db.sqlite3
+/backup
+/dev.env
+myworld/
+env/
