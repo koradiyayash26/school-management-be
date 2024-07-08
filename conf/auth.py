@@ -9,6 +9,17 @@ from rest_framework import serializers,generics
 from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
 
 class CustomAuthToken(ObtainAuthToken):
 
@@ -17,11 +28,13 @@ class CustomAuthToken(ObtainAuthToken):
                                        context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+        jwt_token = get_tokens_for_user(user)
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
             'user_id': user.pk,
-            'email': user.email
+            'email': user.email,
+            'jwt_token':jwt_token
         })
         
 
@@ -84,3 +97,5 @@ class GetUserProfileUsername(APIView):
             raise AuthenticationFailed("Invalid token")
 
         return JsonResponse({"message": "Token verification successful", "username": username}, status=200)
+    
+    
