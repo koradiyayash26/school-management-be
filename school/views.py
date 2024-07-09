@@ -15,10 +15,12 @@ from .serializers import SchoolStudentSerializer,SchoolStudentDetailSerializer,S
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 # get api for school student
 class SchoolStudentGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -29,7 +31,7 @@ class SchoolStudentGet(APIView):
 # get api for student name
 
 class SchoolStudentNamesGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -40,7 +42,7 @@ class SchoolStudentNamesGet(APIView):
 # get by id api for school student 
 
 class SchoolStudentByIdGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -55,7 +57,7 @@ class SchoolStudentByIdGet(APIView):
 #  post api for school student
 
 class SchoolStudentPost(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -68,7 +70,7 @@ class SchoolStudentPost(APIView):
 # patch api for school student
 
 class SchoolStudentPatch(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
@@ -92,7 +94,7 @@ class SchoolStudentPatch(APIView):
 # get api by single student of report standard 
 
 class ReportStandardGetAPI(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, std):

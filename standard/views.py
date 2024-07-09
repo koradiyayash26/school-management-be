@@ -8,8 +8,12 @@ from student.serializers import StudentsSerializer
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 class CountStudents(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         std = {"13":0,"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
 
@@ -28,6 +32,8 @@ class CountStudents(APIView):
 
 # api for perticuler standard student data
 class StandardsGetData(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, pk):
         try:
             # Filter students by standard
@@ -42,7 +48,7 @@ class StandardsGetData(APIView):
 
         
 class StandardsNo(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

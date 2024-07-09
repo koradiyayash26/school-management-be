@@ -10,59 +10,46 @@ from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
-    
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
 
-
 class CustomAuthToken(ObtainAuthToken):
-
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data,
-                                       context={'request': request})
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         jwt_token = get_tokens_for_user(user)
-        token, created = Token.objects.get_or_create(user=user)
         return Response({
-            'token': token.key,
             'user_id': user.pk,
             'email': user.email,
-            'jwt_token':jwt_token
+            'jwt_token': jwt_token,
         })
-        
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username']
-        # fields = ['id', 'username', 'email']
 
 class AuthTokenVerify(APIView):
+    authentication_classes = [JWTAuthentication]
     def get(self, request):
-        token = request.query_params.get('token')
-        if not token:
-            return JsonResponse({"detail": "Token not provided."}, status=400)
-
         try:
-            verify = Token.objects.get(key=token)
-            user_data = UserSerializer(verify.user).data
-        except Token.DoesNotExist:
-            raise AuthenticationFailed("Invalid token")
-        
+            user_data = UserSerializer(request.user).data
+        except Exception as e:
+            raise AuthenticationFailed("Invalid token or user not found")
         return JsonResponse({"message": "Token verification successful", "user": user_data}, status=200)
-
-
 class ChangePasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
+
     permission_classes = [IsAuthenticated]
     def update(self, request, *args, **kwargs):
         user = request.user
@@ -75,7 +62,8 @@ class ChangePasswordView(generics.UpdateAPIView):
     
 class ChangeUsernameView(generics.UpdateAPIView):
     queryset = User.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
+
     permission_classes = [IsAuthenticated]
     def update(self, request, *args, **kwargs):
         user = request.user
@@ -84,7 +72,8 @@ class ChangeUsernameView(generics.UpdateAPIView):
         return Response({"detail": "Username updated successfully"})
 
 class GetUserProfileUsername(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
+
     def get(self, request):
         token_key = request.query_params.get('token')
         if not token_key:

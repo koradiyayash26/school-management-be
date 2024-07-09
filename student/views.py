@@ -33,10 +33,10 @@ from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,Stud
 from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class StudentAdd(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -54,7 +54,7 @@ class StudentAdd(APIView):
 # all students get api
 
 class StudentGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -66,7 +66,7 @@ class StudentGet(APIView):
 # api for exam marks get
 
 class ExamMarksGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -78,7 +78,7 @@ class ExamMarksGet(APIView):
 # Single Exammarks get api by id
 
 class ExamMarksGetId(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, pk):
         try:
@@ -93,7 +93,7 @@ class ExamMarksGetId(APIView):
 # update api for exammarks
 
 class ExamMarksUpdate(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def patch(self, request, pk):
         try:
@@ -111,7 +111,7 @@ class ExamMarksUpdate(APIView):
 # add Api for exammarks
 
 class ExamMarksAdd(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -126,7 +126,7 @@ class ExamMarksAdd(APIView):
 # upload file of xcel data post api for exammarks
 
 class ExamMarksUploadFileAdd(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     FIELD_NAME_MAPPING = {
@@ -224,7 +224,7 @@ class ExamMarksUploadFileAdd(APIView):
 
 class ExamMarksDelete(APIView):
     
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
@@ -241,7 +241,7 @@ class ExamMarksDelete(APIView):
 # Student uppdate historical get api
 
 class StudentUpdateHistoricalGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -252,7 +252,7 @@ class StudentUpdateHistoricalGet(APIView):
 # Student uppdate historical Delete api
 
 class StudentUpdateHistoricalDelete(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
@@ -283,7 +283,7 @@ class StudentGetId(APIView):
 
 # update api for student
 class StudentUpdate(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
@@ -306,7 +306,7 @@ class StudentUpdate(APIView):
 # update for student api
 
 class StudentDelete(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def delete(self, request, pk):
         try:
@@ -322,7 +322,7 @@ class StudentDelete(APIView):
 # student update year and std get api of template
 
 class StudentUpdateStdYearGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         
@@ -333,7 +333,7 @@ class StudentUpdateStdYearGet(APIView):
 # student update year and std Post api of template
 
 class StudentUpdateStdYearPost(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = StudentUpdateStdYearSerializer(data=request.data)
@@ -376,7 +376,7 @@ class StudentsAddYearAndstdFromurl(APIView):
 # get api for seleted or not seleted
 
 class StudentSletedOrNotSeletedGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, standard, year):
@@ -431,7 +431,7 @@ class StudentSletedOrNotSeletedGet(APIView):
 
 
 class StudentsSelectedPost(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -503,7 +503,7 @@ class StudentsSelectedPost(APIView):
 
 # post api for UnSeleted STudent 
 class StudentsUnselectedPost(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

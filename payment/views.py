@@ -12,11 +12,13 @@ from django.shortcuts import get_object_or_404
 from student.models import Students,SchoolStudent
 from .models import (Receipt, ReceiptDetail, fee_type, historical_fees,fee_type_master,standard_master,
                      student_fees)
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 # Post api for fee-type template add
 
 class FeeTypesPost(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -30,7 +32,7 @@ class FeeTypesPost(APIView):
 
 # get api for fee-type
 class FeeTypeGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -41,7 +43,7 @@ class FeeTypeGet(APIView):
 
 # get api by id fee type
 class FeeTypeIdGetData(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -55,7 +57,7 @@ class FeeTypeIdGetData(APIView):
 
 #  patch api fee type
 class FeeTypePatch(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
@@ -74,7 +76,7 @@ class FeeTypePatch(APIView):
 #  get api for standard-master,Fee-Type-Master
 
 class FeeTypeGetAddDetails(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         fee_master = fee_type_master.objects.all()
@@ -92,7 +94,7 @@ class FeeTypeGetAddDetails(APIView):
 
 class FeeTypeDelete(APIView):
     
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
@@ -108,7 +110,7 @@ class FeeTypeDelete(APIView):
 # Get api for Historical Fees
 
 class HistoricalDataGetApi(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -119,7 +121,7 @@ class HistoricalDataGetApi(APIView):
 #  Delete api for Historical fee
 
 class HistoricalDataDeleteApi(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
@@ -136,7 +138,7 @@ class HistoricalDataDeleteApi(APIView):
 # Post api For Historical Fee
 
 class HistoricalDataPostApi(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -151,7 +153,7 @@ class HistoricalDataPostApi(APIView):
 
 # get api for studentfeee
 class StudentAssignFeeApiGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, standard, pk, year):
         # Get the queryset for assigned students
@@ -218,7 +220,7 @@ class StudentAssignUnAssign(APIView):
 # get api for payment student for add amount payment 1/2024 
 
 class PaymentStudentFeeGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, year, format=None):
@@ -290,7 +292,7 @@ class PaymentStudentFeeGet(APIView):
 
 # patch for paymentstudent 
 class PaymentStudentFeePatch(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
@@ -351,7 +353,7 @@ class PaymentStudentFeePatch(APIView):
 # api get for paymenthistory
 
 class PaymentFeeListGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -363,7 +365,7 @@ class PaymentFeeListGet(APIView):
 # api get by id for receiptDetails
 
 class PaymentReceiptDetails(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -378,7 +380,7 @@ class PaymentReceiptDetails(APIView):
 # api get by id for paymenthistory
 
 class PaymentFeeListIdToGet(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -400,7 +402,7 @@ class PaymentFeeListIdToGet(APIView):
 
 # api for delete api 
 class PaymentFeeDelete(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk, format=None):
