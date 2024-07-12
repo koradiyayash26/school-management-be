@@ -605,4 +605,23 @@ class ExamMarksTemplateAddGet(APIView):
         exam = ExamMarksTemplateAdd.objects.all()
         serialized_data = ExamMarksTemplateAddSerializer(exam, many=True)
         return JsonResponse({"message": "ExamTemplate list Get Successfully", "data": serialized_data.data}, status=200)
+
+
+# Examtemplate patch api
+class ExamMarksTemplateAddUpdate(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
+    def patch(self, request, pk):
+        try:
+            exam = ExamMarksTemplateAdd.objects.get(pk=pk)
+        except ExamMarksTemplateAdd.DoesNotExist:
+            return JsonResponse({"message": "ExamTemplate not found"}, status=404)
+
+        data = request.data
+        serializer = ExamMarksTemplateAddSerializer(exam, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"message": "ExamTemplate updated successfully", "data": serializer.data}, status=200)
+        return JsonResponse({"message": "Invalid data", "errors": serializer.errors}, status=400)
