@@ -29,8 +29,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
 
 from django.core import serializers
-from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,StudentsStdMultiList,StudentsUpdatesHistory
-from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer
+from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd
+from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -594,3 +594,15 @@ class StudentsUnselectedPost(APIView):
             
         return JsonResponse({'message': 'Students updated successfully'}, status=200)
 
+
+
+# Examtemplate get api
+class ExamMarksTemplateAddGet(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        
+        exam = ExamMarksTemplateAdd.objects.all()
+        serialized_data = ExamMarksTemplateAddSerializer(exam, many=True)
+        return JsonResponse({"message": "ExamTemplate list Get Successfully", "data": serialized_data.data}, status=200)
+    

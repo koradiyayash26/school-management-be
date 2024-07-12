@@ -1,4 +1,4 @@
-from .models import Students,ExamMarks,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList
+from .models import Students,ExamMarks,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd
 from rest_framework import serializers
 
 
@@ -61,3 +61,10 @@ class StudentUpdatedSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
         # fields = ['id','grno','first_name','last_name','standard','year']
+
+
+
+class ExamMarksTemplateAddSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamMarksTemplateAdd
+        fields = '__all__'

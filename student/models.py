@@ -259,3 +259,17 @@ class StudentsUpdatesHistory(models.Model):
         
     def __str__(self):
         return str(self.name)
+
+
+class ExamMarksTemplateAdd(models.Model):
+    id = models.AutoField(primary_key=True)
+    standard = models.CharField(max_length=14, choices=STD_CHOICES)
+    total_marks = models.IntegerField()
+    subject = models.CharField(max_length=100)
+    date = models.DateField()
+    note = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.standard} - {self.subject} - {self.total_marks}"

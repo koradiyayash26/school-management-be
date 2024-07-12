@@ -33,8 +33,13 @@ student_update_urlpatterns = [
     path('add-multilist/', views.StudentsAddYearAndstdFromurl.as_view(), name='student_update_add_updatemultilist_get'),    
 ]
 
+exam_teamplate_urlpatterns = [
+    path('search/', views.ExamMarksTemplateAddGet.as_view(), name='exam_template_list_get'),
+]
+
 urlpatterns = [
     path('exams/', include(exam_urlpatterns)),    
+    path('exam-template/', include(exam_teamplate_urlpatterns)),    
     path('students/', include(student_urlpatterns)),   
     path('educationals/', include(educational_urlpatterns)),   
     path('student-update/', include(student_update_urlpatterns)),   
