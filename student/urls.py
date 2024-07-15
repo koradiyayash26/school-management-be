@@ -35,6 +35,8 @@ student_update_urlpatterns = [
 
 exam_teamplate_urlpatterns = [
     path('search/', views.ExamMarksTemplateAddGet.as_view(), name='exam_template_list_get'),
+    path('add/', views.ExamMarksTemplateAddAPI.as_view(), name='exam_template_post'),
+    path('<int:pk>/search/', views.ExamMarksTemplateGetId.as_view(), name='exam_template_get_id'),    
     path('<int:pk>/edit/', views.ExamMarksTemplateAddUpdate.as_view(), name='exam_template_update'),    
 ]
 

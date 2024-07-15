@@ -270,6 +270,8 @@ class StudentUpdateHistoricalDelete(APIView):
 # Single student get api by id
 
 class StudentGetId(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request, pk):
         try:
             student = Students.objects.get(pk=pk)
@@ -625,3 +627,36 @@ class ExamMarksTemplateAddUpdate(APIView):
             serializer.save()
             return JsonResponse({"message": "ExamTemplate updated successfully", "data": serializer.data}, status=200)
         return JsonResponse({"message": "Invalid data", "errors": serializer.errors}, status=400)
+    
+    
+# ExamTemplate get api for get by id 
+class ExamMarksTemplateGetId(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk):
+        try:
+            exam = ExamMarksTemplateAdd.objects.get(pk=pk)
+            serialized_data = ExamMarksTemplateAddSerializer(exam)
+            return JsonResponse({"message": "Exam Template retrieved successfully", "data": serialized_data.data}, status=200)
+        except ExamMarksTemplateAdd.DoesNotExist:
+            return JsonResponse({"message": "Exam Template not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"message": "An error occurred", "error": str(e)}, status=500)
+
+# ExamTemplate POst api  
+
+class ExamMarksTemplateAddAPI(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        try:
+            data = request.data
+            serializer = ExamMarksTemplateAddSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
