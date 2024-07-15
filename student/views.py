@@ -659,4 +659,21 @@ class ExamMarksTemplateAddAPI(APIView):
                 return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+ 
+ 
+
+# ExamTemplate delete api  
+class ExamMarksTemplateDelete(APIView):
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        try:
+            exam = ExamMarksTemplateAdd.objects.get(pk=pk)
+        except ExamMarksTemplateAdd.DoesNotExist:
+            return JsonResponse({"message": "Exam Template Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        exam.delete()
+        return JsonResponse({"message": "Exam Template Deleted Successfully"}, status=status.HTTP_204_NO_CONTENT)
     

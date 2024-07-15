@@ -38,6 +38,7 @@ exam_teamplate_urlpatterns = [
     path('add/', views.ExamMarksTemplateAddAPI.as_view(), name='exam_template_post'),
     path('<int:pk>/search/', views.ExamMarksTemplateGetId.as_view(), name='exam_template_get_id'),    
     path('<int:pk>/edit/', views.ExamMarksTemplateAddUpdate.as_view(), name='exam_template_update'),    
+    path('<int:pk>/delete/', views.ExamMarksTemplateDelete.as_view(), name='exam_template_delete'),    
 ]
 
 urlpatterns = [
