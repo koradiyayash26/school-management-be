@@ -29,8 +29,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
 
 from django.core import serializers
-from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd
-from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer
+from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData
+from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -676,4 +676,123 @@ class ExamMarksTemplateDelete(APIView):
         
         exam.delete()
         return JsonResponse({"message": "Exam Template Deleted Successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+# exam template assing mark api
+
+class ExamMarksAssignAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, standard, pk):
+        exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
+        students = Students.objects.filter(standard=standard)
+        
+        exam_template_data = ExamMarksTemplateAddSerializer(exam_template).data
+        students_data = StudentsSerializer(students, many=True).data
+
+        data = {
+            'exam_template': exam_template_data,
+            'students': students_data,
+            'standard': standard,
+        }
+        return JsonResponse({"message": "Data retrieved successfully", "data": data}, status=200)
+
+    def post(self, request, standard, pk):
+        exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
+        students = Students.objects.filter(standard=standard)
+        
+        serializer = ExamMarksAssignSerializer(data=request.data)
+        if serializer.is_valid():
+            for student in students:
+                mark = serializer.validated_data['marks'].get(str(student.id))
+                if mark is not None:
+                    ExamMarkAssingData.objects.create(
+                        standard=standard,
+                        total_marks=exam_template.total_marks,
+                        subject=exam_template.subject,
+                        date=exam_template.date,
+                        note=exam_template.note,
+                        student=student,
+                        ids=exam_template.id,
+                        gender=student.gender,
+                        mark=mark,
+                    )
+            return JsonResponse({"message": "Exam marks assigned successfully"}, status=201)
+        return JsonResponse({"message": "Invalid data", "errors": serializer.errors}, status=400)    
     
+    
+# exam template get api for assing students marks
+
+class ExamMarksViewAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, standard, pk):
+        exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
+        exam_marks = ExamMarkAssingData.objects.filter(
+            ids=pk,
+            standard=standard,
+            date=exam_template.date,
+            total_marks=exam_template.total_marks,
+            subject=exam_template.subject
+        )
+        
+        exam_template_data = ExamMarksTemplateAddSerializer(exam_template).data
+        exam_marks_data = ExamMarkAssingDataSerializer(exam_marks, many=True).data
+
+        data = {
+            'exam_template': exam_template_data,
+            'exam_marks': exam_marks_data,
+        }
+        return JsonResponse({"message": "Data retrieved successfully", "data": data}, status=200) 
+    
+    
+# Exam Assing mark Update 
+ 
+class ExamAssingUpdateMarkAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        exam_template_id = request.data.get('exam_template_id')
+        standard = request.data.get('standard')
+        mark_id = request.data.get('mark_id')
+        new_mark_value = request.data.get('new_mark_value')
+
+        if not all([exam_template_id, standard, mark_id, new_mark_value]):
+            return JsonResponse({'error': 'exam_template_id, standard, mark_id and new_mark_value are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_mark_value = int(new_mark_value)
+        except ValueError:
+            return JsonResponse({'error': 'new_mark_value must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mark_instance = get_object_or_404(ExamMarkAssingData, ids=exam_template_id, standard=standard, student_id=mark_id)
+        mark_instance.mark = new_mark_value
+        mark_instance.save()
+
+        return JsonResponse({'success': True}, status=status.HTTP_200_OK)
+
+    def get(self, request, *args, **kwargs):
+        exam_template_id = request.query_params.get('exam_template_id')
+        standard = request.query_params.get('standard')
+
+        if not all([exam_template_id, standard]):
+            return JsonResponse({'error': 'exam_template_id and standard are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        marks = ExamMarkAssingData.objects.filter(ids=exam_template_id, standard=standard)
+        data = [
+            {
+                'id': mark.id,
+                'student_id': mark.student.id,
+                'mark': mark.mark,
+                'subject': mark.subject,
+                'total_marks': mark.total_marks,
+                'date': mark.date,
+                'note': mark.note,
+            }
+            for mark in marks
+        ]
+
+        return JsonResponse({'data': data}, status=status.HTTP_200_OK)

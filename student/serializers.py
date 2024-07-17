@@ -1,4 +1,4 @@
-from .models import Students,ExamMarks,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd
+from .models import Students,ExamMarks,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData
 from rest_framework import serializers
 
 
@@ -68,3 +68,24 @@ class ExamMarksTemplateAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamMarksTemplateAdd
         fields = '__all__'
+        
+class ExamMarksAssignSerializer(serializers.Serializer):
+    marks = serializers.DictField(child=serializers.IntegerField())        
+    
+class ExamMarkAssingDataSerializer(serializers.ModelSerializer):
+    first_name = serializers.SerializerMethodField()
+    middle_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExamMarkAssingData
+        fields = '__all__'
+
+    def get_first_name(self, obj):
+        return obj.student.first_name if obj.student else None
+
+    def get_middle_name(self, obj):
+        return obj.student.middle_name if obj.student else None
+
+    def get_last_name(self, obj):
+        return obj.student.last_name if obj.student else None

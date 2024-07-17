@@ -39,6 +39,9 @@ exam_teamplate_urlpatterns = [
     path('<int:pk>/search/', views.ExamMarksTemplateGetId.as_view(), name='exam_template_get_id'),    
     path('<int:pk>/edit/', views.ExamMarksTemplateAddUpdate.as_view(), name='exam_template_update'),    
     path('<int:pk>/delete/', views.ExamMarksTemplateDelete.as_view(), name='exam_template_delete'),    
+    path('exam-marks-assign/<int:standard>/<int:pk>/', views.ExamMarksAssignAPIView.as_view(), name='exam_marks_assign'),
+    path('exam-marks-view/<int:standard>/<int:pk>/', views.ExamMarksViewAPIView.as_view(), name='exam_marks_view'),
+    path('update-mark/', views.ExamAssingUpdateMarkAPIView.as_view(), name='update-mark'),
 ]
 
 urlpatterns = [
