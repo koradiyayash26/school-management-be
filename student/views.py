@@ -710,18 +710,29 @@ class ExamMarksAssignAPIView(APIView):
             for student in students:
                 mark = serializer.validated_data['marks'].get(str(student.id))
                 if mark is not None:
-                    ExamMarkAssingData.objects.create(
-                        standard=standard,
-                        total_marks=exam_template.total_marks,
-                        subject=exam_template.subject,
-                        date=exam_template.date,
-                        note=exam_template.note,
-                        student=student,
+                    # Check if the entry already exists for this student and exam_template
+                    existing_entry = ExamMarkAssingData.objects.filter(
                         ids=exam_template.id,
-                        gender=student.gender,
-                        mark=mark,
-                    )
+                        standard=standard,
+                        student=student,
+                    ).exists()
+                    
+                    if not existing_entry:
+                        # Create new entry only if it doesn't already exist
+                        ExamMarkAssingData.objects.create(
+                            ids=exam_template.id,
+                            standard=standard,
+                            total_marks=exam_template.total_marks,
+                            subject=exam_template.subject,
+                            date=exam_template.date,
+                            note=exam_template.note,
+                            student=student,
+                            gender=student.gender,
+                            mark=mark,
+                        )
+            
             return JsonResponse({"message": "Exam marks assigned successfully"}, status=201)
+        
         return JsonResponse({"message": "Invalid data", "errors": serializer.errors}, status=400)    
     
     
