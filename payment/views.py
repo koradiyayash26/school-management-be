@@ -197,6 +197,8 @@ class StudentAssignFeeApiGet(APIView):
 
 
 class StudentAssignUnAssign(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def patch(self, request):
         data = request.data
         finalResponse = {
@@ -415,6 +417,8 @@ class PaymentFeeDelete(APIView):
 
 
 class FeeTotalCount(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         """
         Payload Example: [

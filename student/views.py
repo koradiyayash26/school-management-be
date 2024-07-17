@@ -348,6 +348,8 @@ class StudentUpdateStdYearPost(APIView):
 
 # post API for add students on StudentsStdMultilist
 class StudentsAddYearAndstdFromurl(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         data = request.data
         standard = data.get('standard')
