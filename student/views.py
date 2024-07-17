@@ -671,6 +671,9 @@ class ExamMarksTemplateDelete(APIView):
     def delete(self, request, pk):
         try:
             exam = ExamMarksTemplateAdd.objects.get(pk=pk)
+            exam_data = ExamMarkAssingData.objects.filter(ids=exam.id)
+            # Delete all matching ExamMarkAssingData objects
+            exam_data.delete()
         except ExamMarksTemplateAdd.DoesNotExist:
             return JsonResponse({"message": "Exam Template Not Found"}, status=status.HTTP_404_NOT_FOUND)
         
