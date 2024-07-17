@@ -749,7 +749,6 @@ class ExamMarksViewAPIView(APIView):
     
     
 # Exam Assing mark Update 
- 
 class ExamAssingUpdateMarkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -768,11 +767,13 @@ class ExamAssingUpdateMarkAPIView(APIView):
         except ValueError:
             return JsonResponse({'error': 'new_mark_value must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
 
-        mark_instance = get_object_or_404(ExamMarkAssingData, ids=exam_template_id, standard=standard, student_id=mark_id)
-        mark_instance.mark = new_mark_value
-        mark_instance.save()
-
-        return JsonResponse({'success': True}, status=status.HTTP_200_OK)
+        try:
+            mark_instance = ExamMarkAssingData.objects.get(ids=exam_template_id, standard=standard, student_id=mark_id)
+            mark_instance.mark = new_mark_value
+            mark_instance.save()
+            return JsonResponse({'success': True}, status=status.HTTP_200_OK)
+        except ExamMarkAssingData.DoesNotExist:
+            return JsonResponse({'error': 'No matching record found'}, status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, *args, **kwargs):
         exam_template_id = request.query_params.get('exam_template_id')
