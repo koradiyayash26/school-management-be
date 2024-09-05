@@ -17,7 +17,7 @@ class Command(BaseCommand):
         total = kwargs['total']
         token = kwargs['token']
         fake = Faker('en_US')
-        api_url = 'https://school-management-be-m1fo.onrender.com/students/add/'
+        api_url = 'http://127.0.0.1:8000/students/add/'
 
         headers = {
             'Authorization': f'Bearer {token}',

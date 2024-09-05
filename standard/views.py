@@ -2,9 +2,12 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
 
 from student.models import STATUS_CHOICES, Students
 from student.serializers import StudentsSerializer
+from .models import standard_master
+from .serializers import StandardMasterSerializer
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
@@ -102,3 +105,14 @@ class StandardsNo(APIView):
             return JsonResponse({"message": "An error occurred", "error": str(e)}, status=500)
         
         
+class StandardMasterListCreateView(generics.ListCreateAPIView):
+    queryset = standard_master.objects.all()
+    serializer_class = StandardMasterSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+class StandardMasterRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = standard_master.objects.all()
+    serializer_class = StandardMasterSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
