@@ -29,6 +29,8 @@ payments_urlpatterns = [
 
 urlpatterns = [
     path('fee-types/', include(feetypes_urlpatterns)),
+    path('fee-type-master/<int:pk>/', views.FeeTypeMasterRetrieveUpdateView.as_view(), name='fee-type-master-detail'),
+    path('fee-type-master/', views.FeeTypeMasterViewSet.as_view(), name='fee-type-master'),
     path('update-student-fee-types/', views.StudentAssignUnAssign.as_view(), name='student_assign_unassign'),
     # for api 
     path('fee-report/', views.FeeTotalCount.as_view(), name='fee_report'),

@@ -73,3 +73,8 @@ class StudentFeeSerializer(serializers.ModelSerializer):
         model = Students
         fields = '__all__'
 
+class FeeTypeMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = fee_type_master
+        fields = ['id', 'name', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']

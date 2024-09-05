@@ -1,8 +1,8 @@
 import json
-from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,HistoricalFeesSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer
+from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,HistoricalFeesSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer,FeeTypeMasterSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
-from rest_framework import status
+from rest_framework import status,generics
 from standard.serializers import StandardSerializer 
 from django.db.models import Sum
 from django.http import JsonResponse
@@ -10,9 +10,25 @@ from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
 from student.models import Students,SchoolStudent
+from rest_framework import viewsets
 from .models import (Receipt, ReceiptDetail, fee_type, historical_fees,fee_type_master,standard_master,
                      student_fees)
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+
+
+
+class FeeTypeMasterViewSet(generics.ListCreateAPIView):
+    queryset = fee_type_master.objects.all()
+    serializer_class = FeeTypeMasterSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+class FeeTypeMasterRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = fee_type_master.objects.all()
+    serializer_class = FeeTypeMasterSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
 
 # Post api for fee-type template add
