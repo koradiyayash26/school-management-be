@@ -35,6 +35,131 @@ from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,Exa
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+
+from rest_framework.exceptions import PermissionDenied
+from django.contrib.auth.models import User, Group
+from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
+
+
+
+class UserCreateAPIView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        role = request.data.get('role')
+
+        if not username or not password:
+            return Response({'error': 'Username and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(username=username, email=email, password=password)
+        
+        if role:
+            group, _ = Group.objects.get_or_create(name=role)
+            user.groups.add(group)
+
+        return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
+
+class ChangePasswordAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        # Check if the authenticated user is an admin
+        if not request.user.is_staff:
+            raise PermissionDenied("You do not have permission to change other users' passwords.")
+        
+        user = get_object_or_404(User, id=user_id)
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        print(f"Changing password for user ID: {user_id}")
+        print(f"Old password: {old_password}, New password: {new_password}")
+
+        if not old_password or not new_password:
+            return Response({'error': 'Both old and new passwords are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(old_password):
+            return Response({'error': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'message': f'Password changed successfully for user {user.username}'}, status=status.HTTP_200_OK)
+class UserDetailAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id=None):
+        if user_id is None:
+            # If no user_id is provided, return the authenticated user's details
+            user = request.user
+        else:
+            # If a user_id is provided, check if the authenticated user is an admin
+            if not request.user.is_staff:
+                raise PermissionDenied("You do not have permission to view other users' details.")
+            user = get_object_or_404(User, id=user_id)
+
+        last_login = user.last_login.isoformat() if user.last_login else None
+        groups = user.groups.values_list('name', flat=True)
+
+        data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'last_login': last_login,
+            'is_active': user.is_active,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+            'date_joined': user.date_joined.isoformat(),
+            'roles': list(groups),
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class UserListAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]  # Restrict to admin users
+
+    def get(self, request):
+        users = User.objects.all()
+        user_data = []
+        for user in users:
+            last_login = user.last_login.isoformat() if user.last_login else None
+            groups = user.groups.values_list('name', flat=True)
+            user_data.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'last_login': last_login,
+                'is_active': user.is_active,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'date_joined': user.date_joined.isoformat(),
+                'roles': list(groups),
+            })
+        return Response(user_data, status=status.HTTP_200_OK)
+
+class UserDeleteAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]  # Restrict to admin users
+
+    def delete(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        
+        # Prevent deleting the current user
+        if user == request.user:
+            return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Optional: Add any additional checks or logging here
+        
+        user.delete()
+        return Response({"message": f"User {user.username} has been deleted."}, status=status.HTTP_200_OK)
+
+
+
 class StudentAdd(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]

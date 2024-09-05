@@ -50,4 +50,9 @@ urlpatterns = [
     path('students/', include(student_urlpatterns)),   
     path('educationals/', include(educational_urlpatterns)),   
     path('student-update/', include(student_update_urlpatterns)),   
+    path('api/user/create/', views.UserCreateAPIView.as_view(), name='user-create'),
+    path('api/user/change-password/<int:user_id>/', views.ChangePasswordAPIView.as_view(), name='change-password'),
+    path('api/user/detail/<int:user_id>/', views.UserDetailAPIView.as_view(), name='user-detail'),
+    path('api/users/', views.UserListAPIView.as_view(), name='user-list'),
+    path('api/user/delete/<int:user_id>/', views.UserDeleteAPIView.as_view(), name='user-delete'),
 ]
