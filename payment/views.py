@@ -1,7 +1,7 @@
 import json
 from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,HistoricalFeesSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer,FeeTypeMasterSerializer
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated 
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework import status,generics
 from standard.serializers import StandardSerializer 
 from django.db.models import Sum
@@ -31,11 +31,17 @@ class FeeTypeMasterRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
 
+class HasFeeTypePermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'payment.{view.required_permission}')
+
+
 # Post api for fee-type template add
 
 class FeeTypesPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_add_fee_type'
 
     def post(self, request):
         serializer = FeeTypePostSerializer(data=request.data)
@@ -49,7 +55,9 @@ class FeeTypesPost(APIView):
 # get api for fee-type
 class FeeTypeGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_fee_types'
+
 
     def get(self, request):
         fee_types = fee_type.objects.all()
@@ -60,7 +68,9 @@ class FeeTypeGet(APIView):
 # get api by id fee type
 class FeeTypeIdGetData(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_fee_type_details'
+
 
     def get(self, request, pk):
         try:
@@ -74,7 +84,9 @@ class FeeTypeIdGetData(APIView):
 #  patch api fee type
 class FeeTypePatch(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_edit_fee_type'
+
 
     def patch(self, request, pk):
         try:
@@ -93,7 +105,8 @@ class FeeTypePatch(APIView):
 
 class FeeTypeGetAddDetails(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_fee_type_add_details'
     def get(self, request):
         fee_master = fee_type_master.objects.all()
         standard = standard_master.objects.all()
@@ -109,9 +122,9 @@ class FeeTypeGetAddDetails(APIView):
 # delete api for feeType
 
 class FeeTypeDelete(APIView):
-    
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_delete_fee_type'
 
     def delete(self, request, pk):
         try:
@@ -170,7 +183,9 @@ class HistoricalDataPostApi(APIView):
 # get api for studentfeee
 class StudentAssignFeeApiGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_assign_student_fee'
+
     def get(self, request, standard, pk, year):
         # Get the queryset for assigned students
         assigned_students = Students.objects.filter(
@@ -214,7 +229,9 @@ class StudentAssignFeeApiGet(APIView):
 
 class StudentAssignUnAssign(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_update_student_fee_types'
+
     def patch(self, request):
         data = request.data
         finalResponse = {

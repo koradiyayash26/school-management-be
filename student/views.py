@@ -40,6 +40,8 @@ from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import User, Group
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import DjangoModelPermissions
+
 
 
 
@@ -162,7 +164,8 @@ class UserDeleteAPIView(APIView):
 
 class StudentAdd(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = Students.objects.none()  # Required for DjangoModelPermissions
     def post(self, request):
         try:
             data = request.data
@@ -180,7 +183,9 @@ class StudentAdd(APIView):
 
 class StudentGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+
     def get(self, request):
         
         students = Students.objects.all()
@@ -367,7 +372,9 @@ class ExamMarksDelete(APIView):
 
 class StudentUpdateHistoricalGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = StudentsUpdatesHistory.objects.none()  # Required for DjangoModelPermissions
+
     def get(self, request):
         
         students = StudentsUpdatesHistory.objects.all()
@@ -378,7 +385,8 @@ class StudentUpdateHistoricalGet(APIView):
 
 class StudentUpdateHistoricalDelete(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = StudentsUpdatesHistory.objects.none()  # Required for DjangoModelPermissions
 
     def delete(self, request, pk):
         try:
@@ -396,7 +404,9 @@ class StudentUpdateHistoricalDelete(APIView):
 
 class StudentGetId(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+
     def get(self, request, pk):
         try:
             student = Students.objects.get(pk=pk)
@@ -411,7 +421,8 @@ class StudentGetId(APIView):
 # update api for student
 class StudentUpdate(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = Students.objects.none()  # Required for DjangoModelPermissions
 
     def patch(self, request, pk):
         try:
@@ -434,7 +445,9 @@ class StudentUpdate(APIView):
 
 class StudentDelete(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+
     def delete(self, request, pk):
         try:
             student = Students.objects.get(pk=pk)
@@ -450,7 +463,8 @@ class StudentDelete(APIView):
 
 class StudentUpdateStdYearGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
     def get(self, request):
         
         template = UpdateStudent.objects.all()
@@ -461,7 +475,9 @@ class StudentUpdateStdYearGet(APIView):
 
 class StudentUpdateStdYearPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+
     def post(self, request):
         serializer = StudentUpdateStdYearSerializer(data=request.data)
         if serializer.is_valid():
@@ -474,7 +490,9 @@ class StudentUpdateStdYearPost(APIView):
 # post API for add students on StudentsStdMultilist
 class StudentsAddYearAndstdFromurl(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+
     def post(self, request):
         data = request.data
         standard = data.get('standard')
@@ -506,7 +524,9 @@ class StudentsAddYearAndstdFromurl(APIView):
 
 class StudentSletedOrNotSeletedGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+
 
     def get(self, request, standard, year):
         # Check if records exist in StudentsStdMultiList for the provided standard and year
@@ -561,7 +581,9 @@ class StudentSletedOrNotSeletedGet(APIView):
 
 class StudentsSelectedPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+
 
     def post(self, request):
         data = json.loads(request.body)
@@ -633,7 +655,9 @@ class StudentsSelectedPost(APIView):
 # post api for UnSeleted STudent 
 class StudentsUnselectedPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+
 
     def post(self, request):
         data = json.loads(request.body)
@@ -728,7 +752,9 @@ class StudentsUnselectedPost(APIView):
 # Examtemplate get api
 class ExamMarksTemplateAddGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+
     def get(self, request):
         
         exam = ExamMarksTemplateAdd.objects.all()
@@ -739,7 +765,9 @@ class ExamMarksTemplateAddGet(APIView):
 # Examtemplate patch api
 class ExamMarksTemplateAddUpdate(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+
     
     def patch(self, request, pk):
         try:
@@ -759,7 +787,9 @@ class ExamMarksTemplateAddUpdate(APIView):
 # ExamTemplate get api for get by id 
 class ExamMarksTemplateGetId(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+
     def get(self, request, pk):
         try:
             exam = ExamMarksTemplateAdd.objects.get(pk=pk)
@@ -774,7 +804,9 @@ class ExamMarksTemplateGetId(APIView):
 
 class ExamMarksTemplateAddAPI(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+
     def post(self, request):
         try:
             data = request.data
@@ -793,7 +825,8 @@ class ExamMarksTemplateAddAPI(APIView):
 class ExamMarksTemplateDelete(APIView):
     
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
 
     def delete(self, request, pk):
         try:
@@ -812,7 +845,8 @@ class ExamMarksTemplateDelete(APIView):
 
 class ExamMarksAssignAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
 
     def get(self, request, standard, pk):
         exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
@@ -867,7 +901,9 @@ class ExamMarksAssignAPIView(APIView):
 
 class ExamMarksViewAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+
 
     def get(self, request, standard, pk):
         exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
@@ -892,7 +928,8 @@ class ExamMarksViewAPIView(APIView):
 # Exam Assing mark Update 
 class ExamAssingUpdateMarkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
 
     def patch(self, request, *args, **kwargs):
         exam_template_id = request.data.get('exam_template_id')

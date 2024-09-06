@@ -14,14 +14,19 @@ from payment.models import (ReceiptDetail,
 from .serializers import SchoolStudentSerializer,SchoolStudentDetailSerializer,SchoolStudentPostSerializer
 
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated 
+from rest_framework.permissions import IsAuthenticated,BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+class HasFeeStudentPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'school.{view.required_permission}')
 
 # get api for school student
 class SchoolStudentGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
+    required_permission = 'can_view_fee_student'
     def get(self, request):
         
         school_student = SchoolStudent.objects.all()
@@ -32,7 +37,9 @@ class SchoolStudentGet(APIView):
 
 class SchoolStudentNamesGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
+    required_permission = 'can_view_fee_student'
+
     def get(self, request):
         
         school_student = Students.objects.all()
@@ -43,7 +50,9 @@ class SchoolStudentNamesGet(APIView):
 
 class SchoolStudentByIdGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
+    required_permission = 'can_view_fee_student'
+
 
     def get(self, request, pk):
         try:
@@ -58,7 +67,9 @@ class SchoolStudentByIdGet(APIView):
 
 class SchoolStudentPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
+    required_permission = 'can_view_fee_student'
+
 
     def post(self, request):
         serializer = SchoolStudentPostSerializer(data=request.data)
@@ -71,7 +82,9 @@ class SchoolStudentPost(APIView):
 
 class SchoolStudentPatch(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
+    required_permission = 'can_view_fee_student'
+
 
     def patch(self, request, pk):
         try:
