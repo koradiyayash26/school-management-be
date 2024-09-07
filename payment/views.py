@@ -256,7 +256,8 @@ class StudentAssignUnAssign(APIView):
 
 class PaymentStudentFeeGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_student_fees'
 
     def get(self, request, pk, year, format=None):
         # Fetch the student
@@ -328,7 +329,8 @@ class PaymentStudentFeeGet(APIView):
 # patch for paymentstudent 
 class PaymentStudentFeePatch(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_collect_payment'
 
     def patch(self, request):
         data = request.data
@@ -389,7 +391,9 @@ class PaymentStudentFeePatch(APIView):
 
 class PaymentFeeListGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_payment_list'
+
 
     def get(self, request):
         queryset = Receipt.objects.filter().values('id', 'note', 'fee_paid_date', 'student__first_name', 'student__last_name', 'student__middle_name', 'student__standard', 'student__grno').annotate(paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived')).order_by('-fee_paid_date')
@@ -401,7 +405,8 @@ class PaymentFeeListGet(APIView):
 
 class PaymentReceiptDetails(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_receipt_details'
 
     def get(self, request, pk):
         try:
@@ -416,7 +421,8 @@ class PaymentReceiptDetails(APIView):
 
 class PaymentFeeListIdToGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_view_payment_details'
 
     def get(self, request, pk):
             try:
@@ -438,7 +444,8 @@ class PaymentFeeListIdToGet(APIView):
 # api for delete api 
 class PaymentFeeDelete(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasFeeTypePermission]
+    required_permission = 'can_delete_payment'
 
     def delete(self, request, pk, format=None):
         try:

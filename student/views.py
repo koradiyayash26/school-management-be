@@ -144,11 +144,16 @@ class UserDeleteAPIView(APIView):
         return Response({"message": f"User {user.username} has been deleted."}, status=status.HTTP_200_OK)
 
 
+# permission for student for group
+class HasStudentPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'student.{view.required_permission}')
 
 class StudentAdd(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_add_student'
+    
     def post(self, request):
         try:
             data = request.data
@@ -166,8 +171,8 @@ class StudentAdd(APIView):
 
 class StudentGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_view_student'
 
     def get(self, request):
         
@@ -392,8 +397,8 @@ class StudentUpdateHistoricalDelete(APIView):
 
 class StudentGetId(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_view_student'
 
     def get(self, request, pk):
         try:
@@ -409,8 +414,8 @@ class StudentGetId(APIView):
 # update api for student
 class StudentUpdate(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_edit_student'
 
     def patch(self, request, pk):
         try:
@@ -433,8 +438,8 @@ class StudentUpdate(APIView):
 
 class StudentDelete(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = Students.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_delete_student'
 
     def delete(self, request, pk):
         try:

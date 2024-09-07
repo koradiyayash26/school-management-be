@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from student.models import Students, ExamMarksTemplateAdd, UpdateStudent, StudentsStdMultiList, StudentsUpdatesHistory, SchoolStudent  # Import your models
 from payment.models import fee_type  # Import your FeeTypes model
-
+from payment.models import Receipt,ReceiptDetail,student_fees
 class Command(BaseCommand):
     help = 'Creates StudentPermission, ExamPermission, StudentUpdateYearStd, StudentUpdateHistory, and FeeTypesPermission groups and assigns permissions'
 
@@ -14,6 +14,7 @@ class Command(BaseCommand):
         self.create_fee_types_permission_group()
         self.create_school_student_permission_group()
         self.create_student_update_history_permission_group()
+        self.create_payments_permission_group()
 
     def create_student_permission_group(self):
         group, created = Group.objects.get_or_create(name='StudentPermission')
@@ -173,3 +174,35 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
 
         self.stdout.write(self.style.SUCCESS('Successfully set up StudentUpdateHistoryPermission group and custom permissions'))             
+    
+    
+    def create_payments_permission_group(self):
+        group, created = Group.objects.get_or_create(name='PaymentsPermission')
+
+        # Define custom permissions based on URL patterns
+        custom_permissions = [
+            ('can_view_payment_list', 'Can view payment list'),
+            ('can_view_receipt_details', 'Can view receipt details'),
+            ('can_view_payment_details', 'Can view payment details'),
+            ('can_delete_payment', 'Can delete payment'),
+            ('can_view_student_fees', 'Can view student fees'),
+            ('can_collect_payment', 'Can collect payment'),
+        ]
+
+        models = [Receipt, ReceiptDetail, student_fees]
+
+        for model in models:
+            content_type = ContentType.objects.get_for_model(model)
+            for codename, name in custom_permissions:
+                permission, created = Permission.objects.get_or_create(
+                    codename=codename,
+                    name=name,
+                    content_type=content_type,
+                )
+                group.permissions.add(permission)
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Created permission: {name} for {model.__name__}'))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
+
+        self.stdout.write(self.style.SUCCESS('Successfully set up PaymentsPermission group and custom permissions'))
