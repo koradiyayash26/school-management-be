@@ -29,6 +29,9 @@ from rest_framework.permissions import DjangoModelPermissions
 
 
 class UserCreateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated,IsAdminUser]
+    
     def post(self, request):
         username = request.data.get('username')
         email = request.data.get('email')
@@ -51,7 +54,7 @@ class UserCreateAPIView(APIView):
 
 class ChangePasswordAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, user_id):
         # Check if the authenticated user is an admin
@@ -73,9 +76,10 @@ class ChangePasswordAPIView(APIView):
         user.set_password(new_password)
         user.save()
         return Response({'message': f'Password changed successfully for user {user.username}'}, status=status.HTTP_200_OK)
+
 class UserDetailAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsAdminUser]
 
     def get(self, request, user_id=None):
         if user_id is None:
@@ -106,7 +110,8 @@ class UserDetailAPIView(APIView):
 
 class UserListAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAdminUser]  # Restrict to admin users
+    permission_classes = [IsAuthenticated,IsAdminUser]  # Restrict to admin users
+
 
     def get(self, request):
         users = User.objects.all()
@@ -129,7 +134,7 @@ class UserListAPIView(APIView):
 
 class UserDeleteAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAdminUser]  # Restrict to admin users
+    permission_classes = [IsAuthenticated,IsAdminUser]  # Restrict to admin users
 
     def delete(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
