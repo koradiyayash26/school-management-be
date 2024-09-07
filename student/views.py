@@ -27,6 +27,64 @@ from rest_framework.permissions import DjangoModelPermissions
 
 
 
+class GroupListAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        all_groups = Group.objects.all()
+        user_groups = user.groups.all()
+
+        group_data = [
+            {
+                'id': group.id,
+                'name': group.name,
+                'assigned': group in user_groups
+            }
+            for group in all_groups
+        ]
+
+        return Response(group_data)
+
+class AssignGroupsToUserAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        group_ids = request.data.get('group_ids', [])
+        
+        if not isinstance(group_ids, list):
+            return Response({"error": "group_ids must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.groups.clear()  # Remove all existing groups
+        groups = Group.objects.filter(id__in=group_ids)
+        user.groups.add(*groups)
+
+        # Get updated group information
+        all_groups = Group.objects.all()
+        user_groups = user.groups.all()
+
+        group_data = [
+            {
+                'id': group.id,
+                'name': group.name,
+                'assigned': group in user_groups
+            }
+            for group in all_groups
+        ]
+
+        return Response({
+            "message": f"Groups assigned to user {user.username}",
+            "groups": group_data
+        }, status=status.HTTP_200_OK)
 
 class UserCreateAPIView(APIView):
     authentication_classes = [JWTAuthentication]
