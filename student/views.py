@@ -745,14 +745,17 @@ class StudentsUnselectedPost(APIView):
             
         return JsonResponse({'message': 'Students updated successfully'}, status=200)
 
-
+# permission for exam for group
+class HasExamPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'student.{view.required_permission}')
 
 # Examtemplate get api
 class ExamMarksTemplateAddGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
-
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_view_exam_template'
+    
     def get(self, request):
         
         exam = ExamMarksTemplateAdd.objects.all()
@@ -763,9 +766,8 @@ class ExamMarksTemplateAddGet(APIView):
 # Examtemplate patch api
 class ExamMarksTemplateAddUpdate(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
-
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_edit_exam_template'
     
     def patch(self, request, pk):
         try:
@@ -785,8 +787,8 @@ class ExamMarksTemplateAddUpdate(APIView):
 # ExamTemplate get api for get by id 
 class ExamMarksTemplateGetId(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_view_exam_template'
 
     def get(self, request, pk):
         try:
@@ -802,8 +804,8 @@ class ExamMarksTemplateGetId(APIView):
 
 class ExamMarksTemplateAddAPI(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_add_exam_template'
 
     def post(self, request):
         try:
@@ -821,11 +823,10 @@ class ExamMarksTemplateAddAPI(APIView):
 
 # ExamTemplate delete api  
 class ExamMarksTemplateDelete(APIView):
-    
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
-
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_delete_exam_template'
+    
     def delete(self, request, pk):
         try:
             exam = ExamMarksTemplateAdd.objects.get(pk=pk)
@@ -843,8 +844,8 @@ class ExamMarksTemplateDelete(APIView):
 
 class ExamMarksAssignAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_assign_exam_marks'
 
     def get(self, request, standard, pk):
         exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
@@ -899,8 +900,8 @@ class ExamMarksAssignAPIView(APIView):
 
 class ExamMarksViewAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_view_exam_marks'
 
 
     def get(self, request, standard, pk):
@@ -926,9 +927,9 @@ class ExamMarksViewAPIView(APIView):
 # Exam Assing mark Update 
 class ExamAssingUpdateMarkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = ExamMarksTemplateAdd.objects.none()  # Required for DjangoModelPermissions
-
+    permission_classes = [IsAuthenticated,HasExamPermission]
+    required_permission = 'can_update_exam_marks'
+    
     def patch(self, request, *args, **kwargs):
         exam_template_id = request.data.get('exam_template_id')
         standard = request.data.get('standard')
