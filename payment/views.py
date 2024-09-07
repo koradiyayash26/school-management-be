@@ -1,6 +1,5 @@
 import json
 from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,HistoricalFeesSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer,FeeTypeMasterSerializer
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework import status,generics
 from standard.serializers import StandardSerializer 
@@ -10,7 +9,6 @@ from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
 from student.models import Students,SchoolStudent
-from rest_framework import viewsets
 from .models import (Receipt, ReceiptDetail, fee_type, historical_fees,fee_type_master,standard_master,
                      student_fees)
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -30,6 +28,8 @@ class FeeTypeMasterRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+
+# permission for fee type for Group
 
 class HasFeeTypePermission(BasePermission):
     def has_permission(self, request, view):

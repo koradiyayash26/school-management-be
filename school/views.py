@@ -17,16 +17,17 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated,BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-class HasFeeStudentPermission(BasePermission):
+
+# permission for school student for Group
+class HasSchoolStudentPermission(BasePermission):
     def has_permission(self, request, view):
         return request.user.has_perm(f'school.{view.required_permission}')
 
 # get api for school student
 class SchoolStudentGet(APIView):
     authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
-    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
-    required_permission = 'can_view_fee_student'
+    permission_classes = [IsAuthenticated, HasSchoolStudentPermission]
+    required_permission = 'can_view_school_students'
     def get(self, request):
         
         school_student = SchoolStudent.objects.all()
@@ -37,8 +38,8 @@ class SchoolStudentGet(APIView):
 
 class SchoolStudentNamesGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
-    required_permission = 'can_view_fee_student'
+    permission_classes = [IsAuthenticated, HasSchoolStudentPermission]
+    required_permission = 'can_view_school_student_names'
 
     def get(self, request):
         
@@ -50,8 +51,8 @@ class SchoolStudentNamesGet(APIView):
 
 class SchoolStudentByIdGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
-    required_permission = 'can_view_fee_student'
+    permission_classes = [IsAuthenticated, HasSchoolStudentPermission]
+    required_permission = 'can_view_school_student_details'
 
 
     def get(self, request, pk):
@@ -67,8 +68,8 @@ class SchoolStudentByIdGet(APIView):
 
 class SchoolStudentPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
-    required_permission = 'can_view_fee_student'
+    permission_classes = [IsAuthenticated, HasSchoolStudentPermission]
+    required_permission = 'can_add_school_student'
 
 
     def post(self, request):
@@ -82,8 +83,8 @@ class SchoolStudentPost(APIView):
 
 class SchoolStudentPatch(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, HasFeeStudentPermission]
-    required_permission = 'can_view_fee_student'
+    permission_classes = [IsAuthenticated, HasSchoolStudentPermission]
+    required_permission = 'can_edit_school_student'
 
 
     def patch(self, request, pk):

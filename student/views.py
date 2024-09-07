@@ -1,36 +1,19 @@
-from django.views.generic.base import TemplateView
-from django.shortcuts import render, get_object_or_404,redirect
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django.views.generic import ListView, DetailView
-from django.http import JsonResponse, Http404,HttpResponseRedirect
-from django.urls import reverse_lazy
-from django.db.models import Q,Count
-from django_filters.rest_framework import DjangoFilterBackend
-from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.db.models import Count
 import json
 import datetime
-from datetime import timedelta
-from django.utils import timezone
-
-from django.template.loader import render_to_string
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import ExamMarks
-from django.views import View
-from django.http import HttpResponse
 from datetime import datetime
 from datetime import datetime
 
 from rest_framework.views import APIView
-from rest_framework import viewsets
-from rest_framework import filters
-from rest_framework.pagination import PageNumberPagination
-from rest_framework import generics,status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated 
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated,BasePermission
 
-from django.core import serializers
-from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdateList,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData
-from .serializers import StudentsSerializer,ExamSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
+
+from .models import Students,UpdateStudent,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData
+from .serializers import StudentsSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -366,14 +349,18 @@ class ExamMarksDelete(APIView):
         fee.delete()
         return JsonResponse({"message": "Fee-Type Deleted Successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
+# permission for student update history for Group
+class HasStudentUpdateHistoryPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'student.{view.required_permission}')
 
 # Student uppdate historical get api
 
 class StudentUpdateHistoricalGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = StudentsUpdatesHistory.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdateHistoryPermission]  # Required for DjangoModelPermissions
+    required_permission = 'can_view_student_update_history'
+
 
     def get(self, request):
         
@@ -385,9 +372,10 @@ class StudentUpdateHistoricalGet(APIView):
 
 class StudentUpdateHistoricalDelete(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = StudentsUpdatesHistory.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdateHistoryPermission]  # Required for DjangoModelPermissions
+    required_permission = 'can_delete_student_update_history'
 
+    
     def delete(self, request, pk):
         try:
             student = StudentsUpdatesHistory.objects.get(pk=pk)
