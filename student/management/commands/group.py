@@ -19,23 +19,29 @@ class Command(BaseCommand):
     def create_student_permission_group(self):
         group, created = Group.objects.get_or_create(name='StudentPermission')
 
-        permissions = [
-            'add_students',
-            'view_students',
-            'change_students',
-            'delete_students',
+        custom_permissions = [
+            ('can_add_student', 'Can add student'),
+            ('can_view_students', 'Can view students'),
+            ('can_view_student_details', 'Can view student details'),
+            ('can_edit_student', 'Can edit student'),
+            ('can_delete_student', 'Can delete student'),
         ]
 
         content_type = ContentType.objects.get_for_model(Students)
 
-        for permission_codename in permissions:
-            permission = Permission.objects.get(
-                codename=permission_codename,
+        for codename, name in custom_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
                 content_type=content_type,
             )
             group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully set up StudentPermission group and permissions'))
+        self.stdout.write(self.style.SUCCESS('Successfully set up StudentPermission group and custom permissions'))
 
     def create_exam_permission_group(self):
         group, created = Group.objects.get_or_create(name='ExamPermission')

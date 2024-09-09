@@ -235,7 +235,7 @@ class StudentAdd(APIView):
 class StudentGet(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, HasStudentPermission]
-    required_permission = 'can_view_student'
+    required_permission = 'can_view_students'
 
     def get(self, request):
         
@@ -461,7 +461,7 @@ class StudentUpdateHistoricalDelete(APIView):
 class StudentGetId(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, HasStudentPermission]
-    required_permission = 'can_view_student'
+    required_permission = 'can_view_student_details'
 
     def get(self, request, pk):
         try:
