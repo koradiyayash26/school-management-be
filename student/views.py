@@ -515,12 +515,16 @@ class StudentDelete(APIView):
             return JsonResponse({"message": "An error occurred", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
             
             
+# permission for student update year and std for group
+class HasStudentUpdatePermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'student.{view.required_permission}')                        
 # student update year and std get api of template
 
 class StudentUpdateStdYearGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_view_student_update'
     def get(self, request):
         
         template = UpdateStudent.objects.all()
@@ -531,8 +535,8 @@ class StudentUpdateStdYearGet(APIView):
 
 class StudentUpdateStdYearPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_add_student_update'
 
     def post(self, request):
         serializer = StudentUpdateStdYearSerializer(data=request.data)
@@ -546,8 +550,8 @@ class StudentUpdateStdYearPost(APIView):
 # post API for add students on StudentsStdMultilist
 class StudentsAddYearAndstdFromurl(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_add_year_std_multilist'
 
     def post(self, request):
         data = request.data
@@ -580,8 +584,8 @@ class StudentsAddYearAndstdFromurl(APIView):
 
 class StudentSletedOrNotSeletedGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_view_selected_unselected_students'
 
 
     def get(self, request, standard, year):
@@ -637,8 +641,8 @@ class StudentSletedOrNotSeletedGet(APIView):
 
 class StudentsSelectedPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_select_students'
 
 
     def post(self, request):
@@ -711,8 +715,8 @@ class StudentsSelectedPost(APIView):
 # post api for UnSeleted STudent 
 class StudentsUnselectedPost(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    queryset = UpdateStudent.objects.none()  # Required for DjangoModelPermissions
+    permission_classes = [IsAuthenticated, HasStudentUpdatePermission]
+    required_permission = 'can_unselect_students'
 
 
     def post(self, request):

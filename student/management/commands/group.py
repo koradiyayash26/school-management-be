@@ -75,34 +75,31 @@ class Command(BaseCommand):
     def create_student_update_year_std_group(self):
         group, created = Group.objects.get_or_create(name='StudentUpdateYearStd')
 
-        permissions = [
-            'view_updatestudent',
-            'add_updatestudent',
-            'change_updatestudent',
-            'delete_updatestudent',
-            'view_studentsstdmultilist',
-            'add_studentsstdmultilist',
-            'change_studentsstdmultilist',
-            'delete_studentsstdmultilist',
+        custom_permissions = [
+            ('can_view_student_update', 'Can view student update'),
+            ('can_add_student_update', 'Can add student update'),
+            ('can_select_students', 'Can select students'),
+            ('can_unselect_students', 'Can unselect students'),
+            ('can_view_selected_unselected_students', 'Can view selected and unselected students'),
+            ('can_add_year_std_multilist', 'Can add year and standard to multilist'),
         ]
 
-        content_types = [
-            ContentType.objects.get_for_model(UpdateStudent),
-            ContentType.objects.get_for_model(StudentsStdMultiList),
-        ]
+        content_type = ContentType.objects.get_for_model(UpdateStudent)
 
-        for content_type in content_types:
-            for permission_codename in permissions:
-                try:
-                    permission = Permission.objects.get(
-                        codename=permission_codename,
-                        content_type=content_type,
-                    )
-                    group.permissions.add(permission)
-                except Permission.DoesNotExist:
-                    self.stdout.write(self.style.WARNING(f'Permission {permission_codename} does not exist for {content_type.model}'))
+        for codename, name in custom_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
+                content_type=content_type,
+            )
+            group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully set up StudentUpdateYearStd group and permissions'))
+        self.stdout.write(self.style.SUCCESS('Successfully set up StudentUpdateYearStd group and custom permissions'))
+
 
     def create_fee_types_permission_group(self):
         group, created = Group.objects.get_or_create(name='FeeTypesPermission')
