@@ -46,23 +46,31 @@ class Command(BaseCommand):
     def create_exam_permission_group(self):
         group, created = Group.objects.get_or_create(name='ExamPermission')
 
-        permissions = [
-            'add_exammarkstemplateadd',
-            'view_exammarkstemplateadd',
-            'change_exammarkstemplateadd',
-            'delete_exammarkstemplateadd',
+        custom_permissions = [
+            ('can_view_exam_template', 'Can view exam template'),
+            ('can_add_exam_template', 'Can add exam template'),
+            ('can_edit_exam_template', 'Can edit exam template'),
+            ('can_delete_exam_template', 'Can delete exam template'),
+            ('can_assign_exam_marks', 'Can assign exam marks'),
+            ('can_view_exam_marks', 'Can view exam marks'),
+            ('can_update_exam_marks', 'Can update exam marks'),
         ]
 
         content_type = ContentType.objects.get_for_model(ExamMarksTemplateAdd)
 
-        for permission_codename in permissions:
-            permission = Permission.objects.get(
-                codename=permission_codename,
+        for codename, name in custom_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
                 content_type=content_type,
             )
             group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully set up ExamPermission group and permissions'))
+        self.stdout.write(self.style.SUCCESS('Successfully set up ExamPermission group and custom permissions'))
 
     def create_student_update_year_std_group(self):
         group, created = Group.objects.get_or_create(name='StudentUpdateYearStd')
