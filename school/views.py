@@ -21,7 +21,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 # permission for school student for Group
 class HasSchoolStudentPermission(BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perm(f'school.{view.required_permission}')
+        return request.user.has_perm(f'student.{view.required_permission}')
 
 # get api for school student
 class SchoolStudentGet(APIView):

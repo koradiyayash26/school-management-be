@@ -159,6 +159,8 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
             else:
                 self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
+        self.stdout.write(self.style.SUCCESS('Successfully set up SchoolStudentPermission group and custom permissions'))
+                
                 
    
     def create_student_update_history_permission_group(self):
