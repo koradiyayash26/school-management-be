@@ -454,11 +454,21 @@ class PaymentFeeDelete(APIView):
             return JsonResponse({"message": "Receipt deleted successfully"},status=status.HTTP_204_NO_CONTENT)
         except Receipt.DoesNotExist:
             return JsonResponse({'error': 'Receipt not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
+        
+        
+# permission for fee report for Group
+class HasFeeReportPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm('payment.can_view_fee_report')
+    
+    
+    
 class FeeTotalCount(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,HasFeeReportPermission]
+    required_permission = 'can_view_fee_report'
+    
+    
     def get(self, request):
         """
         Payload Example: [

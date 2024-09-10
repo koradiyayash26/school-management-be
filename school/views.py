@@ -17,6 +17,9 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated,BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from payment.views import HasFeeReportPermission
+
+
 
 # permission for school student for Group
 class HasSchoolStudentPermission(BasePermission):
@@ -109,7 +112,8 @@ class SchoolStudentPatch(APIView):
 
 class ReportStandardGetAPI(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,HasFeeReportPermission]
+    required_permission = 'can_view_report_standard'
 
     def get(self, request, std):
         try:

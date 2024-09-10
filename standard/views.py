@@ -1,7 +1,5 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from rest_framework.pagination import PageNumberPagination
 from rest_framework import generics
 
 from student.models import STATUS_CHOICES, Students
@@ -9,9 +7,10 @@ from student.serializers import StudentsSerializer
 from .models import standard_master
 from .serializers import StandardMasterSerializer
 
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from rest_framework.permissions import BasePermission
 
 
 class CountStudents(APIView):
@@ -31,12 +30,18 @@ class CountStudents(APIView):
         }
         return JsonResponse(finalResponse, safe=False, status=200)
 
-
-
+# permission for standard report for Group
+class HasStandardReportPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'standard.{view.required_permission}')
+    
+    
 # api for perticuler standard student data
 class StandardsGetData(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,HasStandardReportPermission]
+    required_permission = 'can_view_standards_data'
+
     def get(self, request, pk):
         try:
             # Filter students by standard
@@ -52,7 +57,8 @@ class StandardsGetData(APIView):
         
 class StandardsNo(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,HasStandardReportPermission]
+    required_permission = 'can_view_standards_count'
 
     def get(self, request):
         try:

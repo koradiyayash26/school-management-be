@@ -4,6 +4,11 @@ from django.contrib.contenttypes.models import ContentType
 from student.models import Students, ExamMarksTemplateAdd, UpdateStudent, StudentsStdMultiList, StudentsUpdatesHistory, SchoolStudent  # Import your models
 from payment.models import fee_type  # Import your FeeTypes model
 from payment.models import Receipt,ReceiptDetail,student_fees
+from standard.models import standard_master
+
+
+
+
 class Command(BaseCommand):
     help = 'Creates StudentPermission, ExamPermission, StudentUpdateYearStd, StudentUpdateHistory, and FeeTypesPermission groups and assigns permissions'
 
@@ -15,6 +20,9 @@ class Command(BaseCommand):
         self.create_school_student_permission_group()
         self.create_student_update_history_permission_group()
         self.create_payments_permission_group()
+        self.create_standard_report_permission_group()
+        self.create_fee_report_permission_group()
+        
 
     def create_student_permission_group(self):
         group, created = Group.objects.get_or_create(name='StudentPermission')
@@ -220,3 +228,54 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
 
         self.stdout.write(self.style.SUCCESS('Successfully set up PaymentsPermission group and custom permissions'))
+        
+    
+    def create_standard_report_permission_group(self):
+        group, created = Group.objects.get_or_create(name='StandardReportPermission')
+
+        # Define custom permissions for StandardReport
+        custom_permissions = [
+            ('can_view_standards_data', 'Can view standards data'),
+            ('can_view_standards_count', 'Can view standards count'),
+        ]
+
+        content_type = ContentType.objects.get_for_model(standard_master)
+
+        for codename, name in custom_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
+                content_type=content_type,
+            )
+            group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))    
+                
+                
+    def create_fee_report_permission_group(self):
+        group, created = Group.objects.get_or_create(name='FeeReportPermission')
+
+        # Define custom permissions for FeeReport
+        custom_permissions = [
+            ('can_view_fee_report', 'Can view fee report'),
+            ('can_view_standards_count', 'Can view standards count'),
+            ('can_view_report_standard', 'Can view report standard'),
+        ]
+
+        models = [student_fees, Receipt, standard_master]
+
+        for model in models:
+            content_type = ContentType.objects.get_for_model(model)
+            for codename, name in custom_permissions:
+                permission, created = Permission.objects.get_or_create(
+                    codename=codename,
+                    name=name,
+                    content_type=content_type,
+                )
+                group.permissions.add(permission)
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Created permission: {name} for {model.__name__}'))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
+
+        self.stdout.write(self.style.SUCCESS('Successfully set up FeeReportPermission group and custom permissions'))
