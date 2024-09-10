@@ -198,9 +198,10 @@ class Command(BaseCommand):
             ('can_delete_payment', 'Can delete payment'),
             ('can_view_student_fees', 'Can view student fees'),
             ('can_collect_payment', 'Can collect payment'),
+            ('can_view_students', 'Can view students'),
         ]
 
-        models = [Receipt, ReceiptDetail, student_fees]
+        models = [Receipt, ReceiptDetail, student_fees, Students]
 
         for model in models:
             content_type = ContentType.objects.get_for_model(model)
