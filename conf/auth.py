@@ -33,21 +33,63 @@ class CustomAuthToken(ObtainAuthToken):
             'jwt_token': jwt_token,
         })
 
+# api token verify api
 class UserSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+    is_staff = serializers.BooleanField()
+    is_superuser = serializers.BooleanField()
+
     class Meta:
         model = User
-        fields = ['username']
+        fields = ['username', 'permissions', 'is_staff', 'is_superuser']
+
+    def get_permissions(self, obj):
+        return list(obj.get_all_permissions())
 
 class AuthTokenVerify(APIView):
     authentication_classes = [JWTAuthentication]
+    
     def get(self, request):
         try:
             user_data = UserSerializer(request.user).data
-            # that group of  user aasing that list return
             groups = list(request.user.groups.values_list('name', flat=True))
+            
+            role = "user"
+            if user_data['is_superuser']:
+                role = "admin"
+            elif user_data['is_staff']:
+                role = "staff"
+            
         except Exception as e:
             raise AuthenticationFailed("Invalid token or user not found")
-        return JsonResponse({"message": "Token verification successful", "user": user_data,"groups":groups}, status=200)
+        
+        return JsonResponse({
+            "message": "Token verification successful",
+            "user": user_data,
+            "groups": groups,
+            "role": role
+        }, status=200)
+
+
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['username']
+
+# class AuthTokenVerify(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     def get(self, request):
+#         try:
+#             user_data = UserSerializer(request.user).data
+#             # that group of  user aasing that list return
+#             groups = list(request.user.groups.values_list('name', flat=True))
+#         except Exception as e:
+#             raise AuthenticationFailed("Invalid token or user not found")
+#         return JsonResponse({"message": "Token verification successful", "user": user_data,"groups":groups}, status=200)
+
+
+
+
 class ChangePasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
     authentication_classes = [JWTAuthentication]
