@@ -20,13 +20,77 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 from rest_framework.exceptions import PermissionDenied
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group,Permission
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
-from rest_framework.permissions import DjangoModelPermissions
 
 
 
+# single user get api of each permiton
+class UserPermissionsAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get user's current permissions
+        user_permissions = list(user.get_all_permissions())
+
+        # Get all available permissions
+        all_permissions = Permission.objects.all()
+        all_permissions_list = [
+            {
+                'id': perm.id,
+                'name': perm.name,
+                'codename': perm.codename,
+                'content_type': perm.content_type.app_label + '.' + perm.content_type.model,
+                'assigned': perm.codename in user_permissions
+            }
+            for perm in all_permissions
+        ]
+
+        return Response({
+            "user_permissions": user_permissions,
+            "all_permissions": all_permissions_list
+        }, status=status.HTTP_200_OK)
+
+
+# assing each permiton api of user
+class AssignPermissionsToUserAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        permission_ids = request.data.get('permissions', [])
+        
+        if not isinstance(permission_ids, list):
+            return Response({"error": "permissions must be a list of IDs"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            permissions = Permission.objects.filter(id__in=permission_ids)
+            user.user_permissions.set(permissions)
+        except ValueError:
+            return Response({"error": "Invalid permission IDs"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get updated permissions
+        updated_permissions = user.get_all_permissions()
+
+        return Response({
+            "message": f"Permissions assigned to user {user.username}",
+            "user_permissions": list(updated_permissions),
+        }, status=status.HTTP_200_OK)
+
+
+#  group permiton get api for single user
 class GroupListAPIView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -50,6 +114,8 @@ class GroupListAPIView(APIView):
 
         return Response(group_data)
 
+
+# user group permition assing api 
 class AssignGroupsToUserAPIView(APIView):
     permission_classes = [IsAdminUser]
 

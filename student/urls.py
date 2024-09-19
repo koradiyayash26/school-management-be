@@ -61,4 +61,7 @@ urlpatterns = [
     
     path('api/user/<int:user_id>/groups/', views.GroupListAPIView.as_view(), name='user-groups'),
     path('api/user/<int:user_id>/assign-groups/', views.AssignGroupsToUserAPIView.as_view(), name='assign-groups'),
+    
+    path('api/user/<int:user_id>/permissions/', views.UserPermissionsAPIView.as_view(), name='user-permissions'),
+    path('api/user/<int:user_id>/assign-permissions/', views.AssignPermissionsToUserAPIView.as_view(), name='assign-permissions'),
 ]
