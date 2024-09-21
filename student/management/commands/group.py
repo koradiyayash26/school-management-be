@@ -25,7 +25,7 @@ class Command(BaseCommand):
         
 
     def create_student_permission_group(self):
-        group, created = Group.objects.get_or_create(name='GeneralRegister')
+        group, created = Group.objects.get_or_create(name='General Register')
 
         custom_permissions = [
             ('can_add_student', 'Can add student'),
@@ -81,7 +81,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Successfully set up ExamPermission group and custom permissions'))
 
     def create_student_update_year_std_group(self):
-        group, created = Group.objects.get_or_create(name='StudentUpdate')
+        group, created = Group.objects.get_or_create(name='Student Update')
 
         custom_permissions = [
             ('can_view_student_update', 'Can view student update'),
@@ -110,7 +110,7 @@ class Command(BaseCommand):
 
 
     def create_fee_types_permission_group(self):
-        group, created = Group.objects.get_or_create(name='FeeTypes')
+        group, created = Group.objects.get_or_create(name='Fee Types')
 
         # Define custom permissions based on URL patterns
         custom_permissions = [
@@ -143,7 +143,7 @@ class Command(BaseCommand):
     
     
     def create_school_student_permission_group(self):
-        group, created = Group.objects.get_or_create(name='StudentFees')
+        group, created = Group.objects.get_or_create(name='Student Fees')
 
         # Define custom permissions based on URL patterns
         custom_permissions = [
@@ -172,7 +172,7 @@ class Command(BaseCommand):
                 
    
     def create_student_update_history_permission_group(self):
-        group, created = Group.objects.get_or_create(name='StudentUpdateHistory')
+        group, created = Group.objects.get_or_create(name='Student Update History')
 
         # Define custom permissions based on URL patterns
         custom_permissions = [
@@ -231,7 +231,7 @@ class Command(BaseCommand):
         
     
     def create_standard_report_permission_group(self):
-        group, created = Group.objects.get_or_create(name='StandardReport')
+        group, created = Group.objects.get_or_create(name='Standard Report')
 
         # Define custom permissions for StandardReport
         custom_permissions = [
@@ -253,7 +253,7 @@ class Command(BaseCommand):
                 
                 
     def create_fee_report_permission_group(self):
-        group, created = Group.objects.get_or_create(name='FeeReport')
+        group, created = Group.objects.get_or_create(name='Fee Report')
 
         # Define custom permissions for FeeReport
         custom_permissions = [

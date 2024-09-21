@@ -27,6 +27,14 @@ from rest_framework.permissions import IsAdminUser
 
 
 # single user get api of each permiton
+from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 class UserPermissionsAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAdminUser]
@@ -37,27 +45,34 @@ class UserPermissionsAPIView(APIView):
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get user's current permissions
-        user_permissions = list(user.get_all_permissions())
+        # Get user's permissions (both from groups and direct assignments)
+        user_permissions = user.user_permissions.all() | Permission.objects.filter(group__user=user)
+        user_permission_ids = set(user_permissions.values_list('id', flat=True))
 
-        # Get all available permissions
-        all_permissions = Permission.objects.all()
-        all_permissions_list = [
-            {
-                'id': perm.id,
-                'name': perm.name,
-                'codename': perm.codename,
-                'content_type': perm.content_type.app_label + '.' + perm.content_type.model,
-                'assigned': perm.codename in user_permissions
-            }
-            for perm in all_permissions
-        ]
+        # Get all groups and their permissions
+        groups = Group.objects.all()
+        group_permissions = []
+
+        for group in groups:
+            group_perms = group.permissions.all()
+            if group_perms:  # Only include groups with permissions
+                group_data = {
+                    'id': group.id,
+                    'name': group.name,
+                    'permissions': [
+                        {
+                            'id': perm.id,
+                            'name': perm.name,
+                            'assigned': perm.id in user_permission_ids
+                        }
+                        for perm in group_perms
+                    ]
+                }
+                group_permissions.append(group_data)
 
         return Response({
-            "user_permissions": user_permissions,
-            "all_permissions": all_permissions_list
+            "user_permissions": group_permissions
         }, status=status.HTTP_200_OK)
-
 
 # assing each permiton api of user
 class AssignPermissionsToUserAPIView(APIView):
@@ -71,6 +86,7 @@ class AssignPermissionsToUserAPIView(APIView):
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
         permission_ids = request.data.get('permissions', [])
+        print(permission_ids,user)
         
         if not isinstance(permission_ids, list):
             return Response({"error": "permissions must be a list of IDs"}, status=status.HTTP_400_BAD_REQUEST)
