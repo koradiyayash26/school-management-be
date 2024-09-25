@@ -237,21 +237,28 @@ class Command(BaseCommand):
         custom_permissions = [
             ('can_view_standards_data', 'Can view standards data'),
             ('can_view_standards_count', 'Can view standards count'),
+            ('can_view_students', 'Can view students'),
         ]
 
-        content_type = ContentType.objects.get_for_model(standard_master)
+        # Array of models
+        models = [standard_master, Students]
 
-        for codename, name in custom_permissions:
-            permission, created = Permission.objects.get_or_create(
-                codename=codename,
-                name=name,
-                content_type=content_type,
-            )
-            group.permissions.add(permission)
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))    
-                
-                
+        for model in models:
+            content_type = ContentType.objects.get_for_model(model)
+            for codename, name in custom_permissions:
+                permission, created = Permission.objects.get_or_create(
+                    codename=codename,
+                    name=name,
+                    content_type=content_type,
+                )
+                group.permissions.add(permission)
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Created permission: {name} for {model.__name__}'))
+                else:
+                    self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
+
+        self.stdout.write(self.style.SUCCESS('Successfully set up StandardReport group and custom permissions'))
+    
     def create_fee_report_permission_group(self):
         group, created = Group.objects.get_or_create(name='Fee Report')
 

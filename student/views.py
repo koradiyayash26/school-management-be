@@ -35,6 +35,15 @@ from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+import pandas as pd
+
+from io import BytesIO
+
+from django.utils.timezone import make_naive, get_default_timezone
+from datetime import date
+
+from django.http import HttpResponse
+
 class UserPermissionsAPIView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAdminUser]
@@ -287,6 +296,48 @@ class UserDeleteAPIView(APIView):
         
         user.delete()
         return Response({"message": f"User {user.username} has been deleted."}, status=status.HTTP_200_OK)
+
+
+# Export of Excel file for gr
+class ExportGeneralRegisterToExcel(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        
+        queryset = Students.objects.all()
+        
+        data = list(queryset.values())
+
+        def convert_to_naive(value):
+            if isinstance(value, datetime):
+                return make_naive(value, get_default_timezone())
+            elif isinstance(value, date):
+                return value
+            return value
+
+
+        for item in data:
+            
+            for field in ['student_img', 'created_at', 'updated_at']:
+                item.pop(field, None)
+            
+            for field in ['birth_date', 'admission_date', 'left_school_date']:
+                if item.get(field) is not None:
+                    item[field] = convert_to_naive(item[field])
+
+        df = pd.DataFrame(data)
+        
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='General Register')
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=general_register.xlsx'
+        response.write(output.getvalue())
+
+        return response
+
 
 
 # permission for student for group

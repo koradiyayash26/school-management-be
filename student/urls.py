@@ -51,6 +51,9 @@ urlpatterns = [
     path('educationals/', include(educational_urlpatterns)),   
     path('student-update/', include(student_update_urlpatterns)),
     
+    # Excel Export Gr
+    path('export-general-register/', views.ExportGeneralRegisterToExcel.as_view(), name='exportGeneralRegister'),
+    
     # admin api for user and group
     
     path('api/user/create/', views.UserCreateAPIView.as_view(), name='user-create'),
