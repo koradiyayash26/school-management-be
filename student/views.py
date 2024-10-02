@@ -11,24 +11,19 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated,BasePermission
 
-
 from .models import Students,UpdateStudent,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData
 from .serializers import StudentsSerializer,ExamGetSerializer,ExamPatchSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-
 from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth.models import User, Group,Permission
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 
-
-
 # single user get api of each permiton
 from django.contrib.auth.models import User, Group, Permission
-from django.contrib.contenttypes.models import ContentType
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -43,6 +38,13 @@ from django.utils.timezone import make_naive, get_default_timezone
 from datetime import date
 
 from django.http import HttpResponse
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction, IntegrityError
+from django.db import models  # Add this import
+import pandas as pd
+import re
 
 class UserPermissionsAPIView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -296,6 +298,160 @@ class UserDeleteAPIView(APIView):
         
         user.delete()
         return Response({"message": f"User {user.username} has been deleted."}, status=status.HTTP_200_OK)
+
+
+# import for bulk-impor for gr
+def convert_to_string(value):
+    if isinstance(value, (int, float)):
+        return str(int(value))
+    elif isinstance(value, str):
+        return re.sub(r'[^\d]', '', value)
+    return value
+
+@method_decorator(csrf_exempt, name='dispatch')
+class BulkImportStudent(APIView):
+    def post(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=400)
+
+        df = pd.read_excel(file, engine='openpyxl')
+        df = df.where(pd.notnull(df), None)
+        
+        students_to_create = []
+        students_to_update = []
+        errors = []
+
+        def parse_date(date_string):
+            if pd.isna(date_string) or date_string is None:
+                return None
+            if isinstance(date_string, (date, datetime)):
+                return date_string
+            try:
+                return datetime.strptime(str(date_string), "%Y-%m-%d").date()
+            except ValueError:
+                return None
+
+        required_fields = [f.name for f in Students._meta.fields if not f.blank and not f.null and f.name not in ['id', 'created_at', 'updated_at']]
+        excel_fields = set(df.columns)
+
+        # Check if all required fields are in the Excel file
+        missing_fields = set(required_fields) - excel_fields
+        if missing_fields:
+            return Response({"error": f"Missing required fields in Excel: {', '.join(missing_fields)}"}, status=400)
+
+        with transaction.atomic():
+            for index, row in df.iterrows():
+                if row.isnull().all():
+                    break  # Stop processing if we encounter an empty row
+
+                try:
+                    student_data = {}
+                    record_errors = []
+
+                    # Check if the required fields are present and not empty
+                    for field in required_fields:
+                        value = row.get(field)
+                        if value is None or pd.isna(value) or (isinstance(value, str) and value.strip() == ''):
+                            record_errors.append(f"Missing required field: {field}")
+
+                    # If there are errors in required fields, skip this row
+                    if record_errors:
+                        errors.append({
+                            "grno": row.get('grno', f"Row {index + 2}"),
+                            "errors": record_errors
+                        })
+                        continue
+
+                    for field in Students._meta.fields:
+                        if field.name in ['id', 'created_at', 'updated_at']:
+                            continue
+                        
+                        value = row.get(field.name)
+                        
+                        if value is None or pd.isna(value):
+                            if field.has_default():
+                                value = field.get_default()
+                            elif not field.blank and not field.null:
+                                record_errors.append(f"Missing required field: {field.name}")
+                                continue
+                            else:
+                                continue  # Skip non-required fields with no value
+                        
+                        if isinstance(field, models.DateField):
+                            value = parse_date(value)
+                            if value is None and field.name in required_fields:
+                                record_errors.append(f"Invalid date for {field.name}")
+                        elif isinstance(field, models.IntegerField):
+                            try:
+                                value = int(value)
+                            except (ValueError, TypeError):
+                                if field.name in required_fields:
+                                    record_errors.append(f"Invalid integer for {field.name}")
+                                value = None
+                        elif field.name in ['udise_no', 'aadhar_no']:
+                            value = convert_to_string(value)
+                        
+                        student_data[field.name] = value
+
+                    if record_errors:
+                        errors.append({
+                            "grno": student_data.get('grno', f"Row {index + 2}"),
+                            "errors": record_errors
+                        })
+                        continue
+
+                    # Check for existing student by ID, GRNO, or name combination
+                    existing_student = None
+                    if 'id' in row and not pd.isna(row['id']):
+                        existing_student = Students.objects.filter(id=row['id']).first()
+                    if not existing_student:
+                        existing_student = Students.objects.filter(grno=student_data['grno']).first()
+                    if not existing_student:
+                        existing_student = Students.objects.filter(
+                            first_name=student_data['first_name'],
+                            last_name=student_data['last_name']
+                        ).first()
+
+                    if existing_student:
+                        # Update existing record
+                        for key, value in student_data.items():
+                            setattr(existing_student, key, value)
+                        students_to_update.append(existing_student)
+                    else:
+                        # Create new record
+                        student = Students(**student_data)
+                        students_to_create.append(student)
+
+                except Exception as e:
+                    errors.append({
+                        "grno": student_data.get('grno', f"Row {index + 2}"),
+                        "errors": [f"Unexpected error: {str(e)}"]
+                    })
+
+            if errors:
+                return Response({"errors": errors}, status=400)
+
+            try:
+                # Bulk create new records
+                Students.objects.bulk_create(students_to_create)
+                
+                # Bulk update existing records
+                if students_to_update:
+                    Students.objects.bulk_update(
+                        students_to_update,
+                        fields=[f.name for f in Students._meta.fields if f.name not in ['id', 'created_at', 'updated_at']]
+                    )
+                
+                return Response({
+                    "message": f"Successfully imported {len(students_to_create)} new records and updated {len(students_to_update)} existing records.",
+                    "created": len(students_to_create),
+                    "updated": len(students_to_update)
+                }, status=200)
+            except IntegrityError as e:
+                return Response({"error": f"Database integrity error: {str(e)}"}, status=400)
+            except Exception as e:
+                return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
 
 
 # Export of Excel file for gr

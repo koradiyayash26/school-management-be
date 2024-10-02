@@ -51,6 +51,8 @@ urlpatterns = [
     path('educationals/', include(educational_urlpatterns)),   
     path('student-update/', include(student_update_urlpatterns)),
     
+    # bulk-import for gr 
+    path('bulk-import/', views.BulkImportStudent.as_view(), name="bulkimport"),
     # Excel Export Gr
     path('export-general-register/', views.ExportGeneralRegisterToExcel.as_view(), name='exportGeneralRegister'),
     
