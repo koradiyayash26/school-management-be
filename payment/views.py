@@ -379,7 +379,7 @@ class PaymentStudentFeePatch(APIView):
         if len(receipt_details) > 0:
             receipt = Receipt.objects.create(fee_paid_date=fee_paid_date, note=note, student_id=student_id)
             for i in receipt_details:
-                ReceiptDetail.objects.create(receipt=receipt, fee_type_id=i['fee_type__id'], total_fee=i['total_fee'], amount_paid=int(i['amount_paid']), amount_waived=int(i['amount_waived']))
+                ReceiptDetail.objects.create(id=receipt.id,receipt=receipt, fee_type_id=i['fee_type__id'], total_fee=i['total_fee'], amount_paid=int(i['amount_paid']), amount_waived=int(i['amount_waived']))
 
         finalResponse = {
             "message": "Fee Collected",
