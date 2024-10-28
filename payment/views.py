@@ -60,9 +60,9 @@ class FeeTypeGet(APIView):
 
 
     def get(self, request):
-        fee_types = fee_type.objects.all()
-        serializer = FeeTypeGetSerializer(fee_types, many=True)
-        return JsonResponse({"message": "Fee Types Retrieved Successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        fee_types = fee_type.objects.all().values('id','fee_master__name','standard','year__year','amount')
+        # serializer = FeeTypeGetSerializer(fee_types, many=True)
+        return JsonResponse({"message": "Fee Types Retrieved Successfully", "data": list(fee_types)}, status=status.HTTP_200_OK)
 
 
 # get api by id fee type
@@ -195,15 +195,7 @@ class StudentAssignFeeApiGet(APIView):
             status='ચાલુ'
         )
 
-        # Get the list of SchoolStudent objects for the given standard and year
-        school_students = SchoolStudent.objects.filter(
-            standard=standard,
-            year=year
-        )
-
-        # Extract the student IDs from the SchoolStudent queryset
-        student_ids = school_students.values_list('student', flat=True).distinct()
-
+        student_ids = Students.objects.filter(standard=standard,academic_year__year=year).values_list('id',flat=True)
         # Get the students who are not assigned
         not_assigned_students = Students.objects.filter(
             id__in=student_ids,
@@ -259,21 +251,9 @@ class PaymentStudentFeeGet(APIView):
     permission_classes = [IsAuthenticated, HasFeeTypePermission]
     required_permission = 'can_view_student_fees'
 
-    def get(self, request, pk, year, format=None):
+    def get(self, request, pk, format=None):
         # Fetch the student
         student = get_object_or_404(Students, id=pk)
-
-        # Fetch the school student for the given year
-        try:
-            school_student = SchoolStudent.objects.get(
-                year=year,
-                student__id=student.id,
-                student__first_name=student.first_name,
-                student__last_name=student.last_name
-            )
-        except SchoolStudent.DoesNotExist:
-            return JsonResponse({"alert": "SchoolStudent not found for the selected year and student"}, status=status.HTTP_404_NOT_FOUND)
-
         # Prepare student context
         student_context = {
             "id": student.id,
@@ -323,6 +303,7 @@ class PaymentStudentFeeGet(APIView):
             "receipt": list(receipt),  # Convert QuerySet to list
             "jsonfees": json.dumps(fees),
         }
+        print(context)
 
         return JsonResponse(context, status=status.HTTP_200_OK)
 

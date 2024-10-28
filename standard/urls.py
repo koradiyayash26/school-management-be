@@ -10,7 +10,13 @@ standards_urlpatterns = [
 ]
 
 
+academic_year_urlpatterns = [
+    path('create-list/', views.AcademicYearListCreateView.as_view(), name='academic-year-list'),
+    path('update-delete/<int:pk>/', views.AcademicYearRetrieveUpdateView.as_view(), name='academic-year-detail'),
+]
+
 urlpatterns = [
     path('standard-count/', views.CountStudents.as_view(), name="CountStudents"),
     path('standards/', include(standards_urlpatterns)),
+    path('academic-year/', include(academic_year_urlpatterns)),
 ]

@@ -7,4 +7,5 @@ class StudentConfig(AppConfig):
 
     def ready(self):
         # Run the command to ensure the StudentPermission group exists
-        call_command('group')
+        # call_command('group')
+        pass

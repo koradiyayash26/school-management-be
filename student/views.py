@@ -527,11 +527,50 @@ class StudentGet(APIView):
     required_permission = 'can_view_students'
 
     def get(self, request):
+        # Get values list data
+        students = Students.objects.all().values(
+            'id',
+            'grno',
+            'last_name',
+            'first_name',
+            'middle_name',
+            'mother_name',
+            'gender',
+            'birth_date',
+            'birth_place',
+            'mobile_no',
+            'address',
+            'city',
+            'district',
+            'standard',
+            'section',
+            'academic_year__year', 
+            'last_school',
+            'admission_std',
+            'admission_date',
+            'left_school_std',
+            'left_school_date',
+            'religion',
+            'category',
+            'caste',
+            'udise_no',
+            'aadhar_no',
+            'account_no',
+            'name_on_passbook',
+            'bank_name',
+            'ifsc_code',
+            'bank_address',
+            'reason',
+            'note',
+            'assesment',
+            'progress',
+            'status'
+        ).order_by('id')
         
-        students = Students.objects.all()
-        serialized_data = StudentsSerializer(students, many=True)
-        return JsonResponse({"message": "Students Get Successfully", "data": serialized_data.data}, status=200)
-    
+        return JsonResponse({
+            "message": "Students Get Successfully", 
+            "data": list(students),
+        }, status=200)
     
 # api for exam marks get
 

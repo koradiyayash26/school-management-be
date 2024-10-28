@@ -9,7 +9,7 @@ feetypes_urlpatterns = [
     path('<int:pk>/edit/', views.FeeTypePatch.as_view(), name='fee_types_edit'),
     path('<int:pk>/delete/', views.FeeTypeDelete.as_view(), name='fee_types_delete'),
     path('add-search/', views.FeeTypeGetAddDetails.as_view(), name='fee_types_get_add_details'),
-    path('<int:pk>/<int:standard>/<int:year>/student-assign/', views.StudentAssignFeeApiGet.as_view(), name='fee_types_get_student_assing'),
+    path('<int:pk>/<int:standard>/<str:year>/student-assign/', views.StudentAssignFeeApiGet.as_view(), name='fee_types_get_student_assing'),
 ]
 
 apioldfees_urlpatterns = [
@@ -23,7 +23,7 @@ payments_urlpatterns = [
     path('<int:pk>/receipt/details/', views.PaymentReceiptDetails.as_view(), name='payment_id_get_details_list'),
     path('<int:pk>/search/', views.PaymentFeeListIdToGet.as_view(), name='payment_id_get_list'),
     path('<int:pk>/delete/', views.PaymentFeeDelete.as_view(), name='payment_fee_delete'),
-    path('<int:pk>/<int:year>/', views.PaymentStudentFeeGet.as_view(), name='payment_student_fee_get'),
+    path('<int:pk>/', views.PaymentStudentFeeGet.as_view(), name='payment_student_fee_get'),
     path('payment-collect/', views.PaymentStudentFeePatch.as_view(), name='payment_student_fee_patch'),
 ]
 

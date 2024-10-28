@@ -1,5 +1,5 @@
 from django.db import models
-
+from standard.models import AcademicYear
 STD_CHOICES = (
     ("1", "1"),
     ("2", "2"),
@@ -103,6 +103,7 @@ class Students(models.Model):
 
     standard = models.CharField(max_length=14, choices=STD_CHOICES)
     section = models.CharField(max_length=2, choices=SECTION_CHOICES, null=True, blank=True)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
 
     last_school = models.CharField(max_length=100, null=True, blank=True, default="")
     admission_std = models.CharField(max_length=10, choices=STD_CHOICES)
@@ -140,8 +141,6 @@ class Students(models.Model):
         db_table = 'students'
         verbose_name = "Student"
         verbose_name_plural = "Students"
-
-
 
 
 class ExamMarks(models.Model):

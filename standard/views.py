@@ -4,8 +4,8 @@ from rest_framework import generics
 
 from student.models import STATUS_CHOICES, Students
 from student.serializers import StudentsSerializer
-from .models import standard_master
-from .serializers import StandardMasterSerializer
+from .models import standard_master,AcademicYear
+from .serializers import StandardMasterSerializer,AcademicYearSerializer
 
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -122,3 +122,19 @@ class StandardMasterRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = StandardMasterSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    
+    
+    
+    
+
+class AcademicYearListCreateView(generics.ListCreateAPIView):
+    queryset = AcademicYear.objects.all()
+    serializer_class = AcademicYearSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+class AcademicYearRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = AcademicYear.objects.all()
+    serializer_class = AcademicYearSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]    

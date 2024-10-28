@@ -1,6 +1,6 @@
 from django.db import models
 
-from standard.models import standard_master
+from standard.models import standard_master,AcademicYear
 from student.models import Students
 
 STD_CHOICES = (
@@ -85,7 +85,7 @@ class fee_type(models.Model):
     fee_master = models.ForeignKey(to=fee_type_master, on_delete=models.SET_NULL, null=True)
     amount = models.PositiveBigIntegerField()
     standard = models.ForeignKey(to=standard_master, on_delete=models.SET_NULL, null=True)
-    year = models.CharField(max_length=50,choices=YEAR_CHOICES,null=True)
+    year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

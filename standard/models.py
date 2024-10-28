@@ -17,3 +17,15 @@ class standard_master(models.Model):
         ordering = ['created_at']
         verbose_name = "Standard-Master"
         verbose_name_plural = "Standard-Master"
+
+
+
+class AcademicYear(models.Model):
+    year = models.CharField(max_length=10, unique=True)
+    is_current = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.year
+
+    class Meta:
+        ordering = ['-year']
