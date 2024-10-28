@@ -12,12 +12,6 @@ feetypes_urlpatterns = [
     path('<int:pk>/<int:standard>/<str:year>/student-assign/', views.StudentAssignFeeApiGet.as_view(), name='fee_types_get_student_assing'),
 ]
 
-apioldfees_urlpatterns = [
-    path('search/', views.HistoricalDataGetApi.as_view(), name='historical_fees_get'),
-    path('add/', views.HistoricalDataPostApi.as_view(), name='historical_fees_add'),
-    path('<int:pk>/delete/', views.HistoricalDataDeleteApi.as_view(), name='historical_fees_delete'),
-]
-
 payments_urlpatterns = [
     path('search/', views.PaymentFeeListGet.as_view(), name='payment_list'),
     path('<int:pk>/receipt/details/', views.PaymentReceiptDetails.as_view(), name='payment_id_get_details_list'),
@@ -34,6 +28,5 @@ urlpatterns = [
     path('update-student-fee-types/', views.StudentAssignUnAssign.as_view(), name='student_assign_unassign'),
     # for api 
     path('fee-report/', views.FeeTotalCount.as_view(), name='fee_report'),
-    path('historical-fees/', include(apioldfees_urlpatterns)),
     path('payments/', include(payments_urlpatterns)),
 ]

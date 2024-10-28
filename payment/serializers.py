@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import fee_type, fee_type_master, standard_master,historical_fees,ReceiptDetail,Receipt,Students
+from .models import fee_type, fee_type_master, standard_master,ReceiptDetail,Receipt,Students
 
 class FeeTypeMasterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,13 +29,6 @@ class FeeTypeGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = fee_type
         fields = ['id', 'fee_master', 'amount', 'standard', 'year', 'is_active']
-
-
-class HistoricalFeesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = historical_fees
-        fields = '__all__'
-
 
 #  all in above of receips or receipt details for api
 

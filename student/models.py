@@ -140,28 +140,7 @@ class Students(models.Model):
     class Meta:
         db_table = 'students'
         verbose_name = "Student"
-        verbose_name_plural = "Students"
-
-
-class ExamMarks(models.Model):
-    student = models.ForeignKey(to=Students, on_delete=models.SET_NULL, null=True)
-    sub = models.CharField(max_length=100)
-    std = models.CharField(max_length=10, choices=STD_CHOICES)
-    date = models.DateField()
-    total_marks = models.IntegerField()
-    marks = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return str(self.student)
-    
-    
-    
-class EducationalYear(models.Model):
-    year = models.CharField(max_length=50,choices=YEAR_CHOICES)
-    
-    def __str__(self):
-        return str(self.year)
-    
+        verbose_name_plural = "Students"  
     
 class SchoolStudent(models.Model):
     student = models.ForeignKey(to=Students, on_delete=models.SET_NULL, null=True)

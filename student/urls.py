@@ -14,15 +14,6 @@ student_urlpatterns = [
     path('<int:pk>/delete/', views.StudentDelete.as_view(), name='delete_student'),
 ]
 
-exam_urlpatterns = [
-    path('search/', views.ExamMarksGet.as_view(), name='get_exammarks'),
-    path('add/', views.ExamMarksAdd.as_view(), name='add_exammarks'),   
-    path('uploadfile/add/', views.ExamMarksUploadFileAdd.as_view(), name='get_id_exammarks'),   
-    path('<int:pk>/search/', views.ExamMarksGetId.as_view(), name='search_exammarks'),   
-    path('<int:pk>/edit/', views.ExamMarksUpdate.as_view(), name='update_exammarks'),   
-    path('<int:pk>/delete/', views.ExamMarksDelete.as_view(), name='delete_exammarks'),   
-]
-
 # student update std and year api 
 student_update_urlpatterns = [
     path('search/', views.StudentUpdateStdYearGet.as_view(), name='student_update_std_year_get'),    
@@ -45,7 +36,6 @@ exam_teamplate_urlpatterns = [
 ]
 
 urlpatterns = [
-    path('exams/', include(exam_urlpatterns)),    
     path('exam-template/', include(exam_teamplate_urlpatterns)),    
     path('students/', include(student_urlpatterns)),   
     path('educationals/', include(educational_urlpatterns)),   

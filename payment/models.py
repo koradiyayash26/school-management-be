@@ -146,22 +146,3 @@ class ReceiptDetail(models.Model):
 
     def __str__(self):
         return f"{str(self.total_fee)}"
-
-
-class historical_fees(models.Model):
-    standard = models.CharField(max_length=10, choices=STD_CHOICES)
-    year = models.CharField(max_length=10, choices=YEAR_CHOICES)
-    date = models.DateField()
-    name = models.CharField(max_length=50)
-    receipt_no = models.CharField(max_length=10)
-    fee_type = models.CharField(max_length=10, choices=FEETYPE_CHOICES)
-    amount = models.PositiveIntegerField()
-
-    def __str__(self):
-        return f"{str(self.name)} - {str(self.standard)}"
-
-    class Meta:
-        db_table = 'historical_fees'
-        ordering = ['standard']
-        verbose_name = "Historical-Fee"
-        verbose_name_plural = "Historical-Fee"

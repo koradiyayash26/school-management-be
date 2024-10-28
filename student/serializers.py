@@ -1,4 +1,4 @@
-from .models import Students,ExamMarks,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData
+from .models import Students,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData
 from rest_framework import serializers
 
 
@@ -8,34 +8,10 @@ class StudentsSerializer(serializers.ModelSerializer):
         # fields = ['id', 'grno', 'last_name', 'first_name', 'middle_name', 'address', 'standard', 'section']
         fields = '__all__'
 
-
-
-class ExamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ExamMarks
-        fields = ['id','student', 'std', 'sub', 'marks', 'total_marks', 'date']
-
 class ExamSerializer2(serializers.ModelSerializer):
     class Meta:
         model = Students
         fields = '__all__'
-
-class ExamGetSerializer(serializers.ModelSerializer):
-    student = ExamSerializer2()
-    class Meta:
-        model = ExamMarks
-        fields = ['id','student', 'std', 'sub', 'marks', 'total_marks', 'date']
-
-
-
-class ExamPatchSerializer(serializers.ModelSerializer):
-    student = serializers.PrimaryKeyRelatedField(queryset=Students.objects.all())
-
-    class Meta:
-        model = ExamMarks
-        fields = ['id','student', 'std', 'sub', 'marks', 'total_marks', 'date']
-
-
 # student update historical 
 
 class StudentUpdateHistoricalSerializer(serializers.ModelSerializer):

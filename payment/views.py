@@ -1,5 +1,5 @@
 import json
-from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,HistoricalFeesSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer,FeeTypeMasterSerializer
+from .serializers import FeeTypeMasterSerializer,FeeTypePostSerializer,FeeTypeGetSerializer,ReceiptDetailsFeesSerializer,StudentFeeSerializer,FeeTypeMasterSerializer
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework import status,generics
 from standard.serializers import StandardSerializer 
@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
-from student.models import Students,SchoolStudent
-from .models import (Receipt, ReceiptDetail, fee_type, historical_fees,fee_type_master,standard_master,
+from student.models import Students
+from .models import (Receipt, ReceiptDetail, fee_type,fee_type_master,standard_master,
                      student_fees)
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -134,50 +134,6 @@ class FeeTypeDelete(APIView):
         
         fee.delete()
         return JsonResponse({"message": "Fee-Type Deleted Successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
-# Get api for Historical Fees
-
-class HistoricalDataGetApi(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        fee_types = historical_fees.objects.all()
-        serializer = HistoricalFeesSerializer(fee_types, many=True)
-        return JsonResponse({"message": "Historical fee data Retrieved Successfully", "data": serializer.data}, status=status.HTTP_200_OK)
-
-#  Delete api for Historical fee
-
-class HistoricalDataDeleteApi(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, pk):
-        try:
-            fee_type = historical_fees.objects.get(pk=pk)
-            fee_type.delete()
-            return JsonResponse({"message": "Historical fee data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-        except historical_fees.DoesNotExist:
-            return JsonResponse({"message": "Historical fee data not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return JsonResponse({"message": "An error occurred", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-# Post api For Historical Fee
-
-class HistoricalDataPostApi(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        serializer = HistoricalFeesSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse({"message": "Historical fee data created successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 # get api for studentfeee
