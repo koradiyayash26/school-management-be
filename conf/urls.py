@@ -21,6 +21,8 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from school.views import HomePageView 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('school.urls')),
@@ -28,6 +30,8 @@ urlpatterns = [
     path('', include('student.urls')),
     path('', include('payment.urls')),
     path('api-token-auth/', CustomAuthToken.as_view(), name='api_token_auth'),
+    
+    path('', HomePageView.as_view(), name='home'),
     
     
    path('api-auth/', include('rest_framework.urls')),

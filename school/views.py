@@ -18,7 +18,12 @@ from rest_framework.permissions import IsAuthenticated,BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from payment.views import HasFeeReportPermission
+from django.views.generic import TemplateView
 
+
+
+class HomePageView(TemplateView):
+    template_name = "home.html"  
 
 
 # permission for school student for Group
