@@ -13,6 +13,6 @@ schoolStudent_urlpatterns = [
 ]
 
 urlpatterns = [    
-    path('report/standard/<str:std>', views.ReportStandardGetAPI.as_view(), name="report-standard"),
+    path('report/standard/<str:standard>/', views.FeeReportDetailAPIViewDemo.as_view(), name="report"),
     path('school-student/', include(schoolStudent_urlpatterns)),
 ]

@@ -113,59 +113,131 @@ class SchoolStudentPatch(APIView):
 
 
 
-# get api by single student of report standard 
 
-class ReportStandardGetAPI(APIView):
+from payment.models import  student_fees,Receipt
+class FeeReportDetailAPIViewDemo(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated,HasFeeReportPermission]
-    required_permission = 'can_view_report_standard'
+    permission_classes = [IsAuthenticated, HasFeeReportPermission]
+    required_permission = 'can_view_fee_report_detail'
 
-    def get(self, request, std):
+    def get(self, request, standard):
         try:
-            # Get assigned students
-            assigned_students = student_fees.objects.filter(
-                student__standard=F('standard__name'), 
-                standard_id=std, 
+            # Get student fees data with fee type details
+            student_fees_queryset = student_fees.objects.filter(
+                standard_id=standard,
                 is_assigned=True
-            ).values(
-                'student_id', 
-                'student__first_name', 
-                'student__last_name', 
-                'student__middle_name', 
-                'student__standard', 
-                'student__grno', 
-                'student__city'
-            ).annotate(total=Sum('fee_type__amount')).order_by()
-
-            # Get fee type IDs
-            fee_types_id_list = student_fees.objects.filter(
-                standard_id=std, 
-                is_assigned=True
-            ).values_list('fee_type_id', flat=True)
-
-            # Get paid students
-            paid_students = ReceiptDetail.objects.filter(
-                fee_type_id__in=fee_types_id_list
-            ).values(
-                'receipt__student_id'
-            ).annotate(
-                paid=Sum('amount_paid'), 
-                waived=Sum('amount_waived')
+            ).select_related(
+                'student', 
+                'standard', 
+                'fee_type', 
+                'fee_type__fee_master'
             )
 
-            # Annotate assigned students with paid and waived amounts
-            for student in assigned_students:
-                student['paid'] = 0
-                student['waived'] = 0
-                for paid_student in paid_students:
-                    if student['student_id'] == paid_student['receipt__student_id']:
-                        student['paid'] = paid_student['paid']
-                        student['waived'] = paid_student['waived']
+            # Get receipt details
+            receipt_details = ReceiptDetail.objects.filter(
+                receipt__student__standard=standard
+            ).select_related(
+                'receipt', 
+                'fee_type', 
+                'fee_type__fee_master'
+            ).values(
+                'receipt__student_id',
+                'fee_type__fee_master__name',
+                'amount_paid',
+                'amount_waived'
+            )
 
-            # Return the data as a JSON response
-            return JsonResponse({"message": "Report Standard data retrieved successfully", "data": list(assigned_students)}, status=200, safe=False)
-        except student_fees.DoesNotExist:
-            return JsonResponse({"message": "Report Standard data not found for the given standard"}, status=404)
+            # Create a dictionary to store receipt totals by student and fee type
+            receipt_totals = {}
+            for detail in receipt_details:
+                student_id = detail['receipt__student_id']
+                fee_type_name = detail['fee_type__fee_master__name']
+                
+                if student_id not in receipt_totals:
+                    receipt_totals[student_id] = {}
+                
+                if fee_type_name not in receipt_totals[student_id]:
+                    receipt_totals[student_id][fee_type_name] = {
+                        'paid': 0,
+                        'waived': 0
+                    }
+                
+                receipt_totals[student_id][fee_type_name]['paid'] += detail['amount_paid']
+                receipt_totals[student_id][fee_type_name]['waived'] += detail['amount_waived']
+
+            # Process student fees and receipts
+            student_data = {}
+            for fee in student_fees_queryset:
+                student_id = fee.student_id
+                if student_id not in student_data:
+                    student_data[student_id] = {
+                        'gr_no': fee.student.grno,
+                        'first_name': fee.student.first_name,
+                        'last_name': fee.student.last_name,
+                        'standard': fee.standard.name if fee.standard else '',
+                        'total_fee': 0,
+                        'paid': 0,
+                        'waived': 0,
+                        'fee_structures': {}
+                    }
+                
+                fee_type_name = str(fee.fee_type.fee_master) if fee.fee_type and fee.fee_type.fee_master else f'Fee Type {fee.fee_type_id}'
+                fee_amount = fee.fee_type.amount if fee.fee_type else 0
+                
+                # Get paid and waived amounts from receipts
+                paid_amount = 0
+                waived_amount = 0
+                if student_id in receipt_totals and fee_type_name in receipt_totals[student_id]:
+                    paid_amount = receipt_totals[student_id][fee_type_name]['paid']
+                    waived_amount = receipt_totals[student_id][fee_type_name]['waived']
+
+                if fee_type_name not in student_data[student_id]['fee_structures']:
+                    student_data[student_id]['fee_structures'][fee_type_name] = {
+                        'amount': fee_amount,
+                        'paid': paid_amount,
+                        'waived': waived_amount,
+                        'pending': fee_amount - paid_amount - waived_amount
+                    }
+                
+                student_data[student_id]['total_fee'] += fee_amount
+                student_data[student_id]['paid'] += paid_amount
+                student_data[student_id]['waived'] += waived_amount
+
+            # Calculate pending amount and prepare final list
+            student_fees_list = []
+            for student in student_data.values():
+                student['pending'] = student['total_fee'] - student['paid'] - student['waived']
+                student_fees_list.append(student)
+
+            # Calculate totals
+            totals = {
+                'total_fee': sum(s['total_fee'] for s in student_fees_list),
+                'paid': sum(s['paid'] for s in student_fees_list),
+                'waived': sum(s['waived'] for s in student_fees_list),
+                'pending': sum(s['pending'] for s in student_fees_list),
+            }
+
+            # Get all unique fee types
+            fee_types = sorted(list(set(
+                fee_type
+                for student in student_fees_list
+                for fee_type in student['fee_structures'].keys()
+            )))
+
+            response_data = {
+                'message': 'Fee report details retrieved successfully',
+                'data': {
+                    'students': student_fees_list,
+                    'fee_types': fee_types,
+                    'totals': totals,
+                    'standard': standard
+                }
+            }
+
+            return JsonResponse(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
-            return JsonResponse({"message": "An error occurred", "error": str(e)}, status=500)
-
+            return JsonResponse(
+                {'message': 'An error occurred', 'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
