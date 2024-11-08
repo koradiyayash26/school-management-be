@@ -14,5 +14,7 @@ schoolStudent_urlpatterns = [
 
 urlpatterns = [    
     path('report/standard/<str:standard>/', views.FeeReportDetailAPIViewDemo.as_view(), name="report"),
+    path('report/fee-report-excel/<int:standard>/', views.FeeReportExcelView.as_view(), name='fee-report-excel'),
+    path('report/fee-type-report-excel/<str:standard>/<int:fee_master_id>/', views.FeeTypeReportExcelViewSingle.as_view(), name='fee-type-report-excel'),
     path('school-student/', include(schoolStudent_urlpatterns)),
 ]
