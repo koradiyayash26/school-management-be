@@ -60,7 +60,7 @@ class FeeTypeGet(APIView):
 
 
     def get(self, request):
-        fee_types = fee_type.objects.all().values('id','fee_master__name','standard','year__year','amount')
+        fee_types = fee_type.objects.all().values('id','fee_master__name','standard__name','year__year','amount')
         # serializer = FeeTypeGetSerializer(fee_types, many=True)
         return JsonResponse({"message": "Fee Types Retrieved Successfully", "data": list(fee_types)}, status=status.HTTP_200_OK)
 
@@ -74,11 +74,21 @@ class FeeTypeIdGetData(APIView):
 
     def get(self, request, pk):
         try:
-            fee_type_instance = fee_type.objects.get(pk=pk)
+            fee_type_instance = fee_type.objects.select_related(
+                'fee_master',
+                'standard'
+            ).get(pk=pk)
+            
             serializer = FeeTypeGetSerializer(fee_type_instance)
-            return JsonResponse({"message": "Fee Type Retrieved Successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+            return JsonResponse({
+                "message": "Fee Type Retrieved Successfully", 
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+            
         except fee_type.DoesNotExist:
-            return JsonResponse({"message": "Fee Type Not Found"}, status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse({
+                "message": "Fee Type Not Found"
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 #  patch api fee type
@@ -189,12 +199,13 @@ class StudentAssignUnAssign(APIView):
         standard = data['standard']
         students_list = data['students']
         assign = data['assign']
+        standard = standard_master.objects.get(name=standard)
         for i in students_list:
             fee_paid_count = ReceiptDetail.objects.filter(receipt__student_id=i, fee_type_id=fee_type).exclude(amount_paid=0, amount_waived=0).count()
             if not assign and (fee_paid_count != 0):
                 finalResponse['message'] = 'some student has already paid fee'
                 continue
-            student_fees.objects.update_or_create(fee_type_id=fee_type, standard_id=standard, student_id=i, defaults={"is_assigned": assign})
+            student_fees.objects.update_or_create(fee_type_id=fee_type, standard_id=standard.id, student_id=i, defaults={"is_assigned": assign})
 
             
 
@@ -259,7 +270,6 @@ class PaymentStudentFeeGet(APIView):
             "receipt": list(receipt),  # Convert QuerySet to list
             "jsonfees": json.dumps(fees),
         }
-        print(context)
 
         return JsonResponse(context, status=status.HTTP_200_OK)
 
@@ -290,7 +300,6 @@ class PaymentStudentFeePatch(APIView):
         receipt_details = []
 
         for x, y in zip(prev_fees, fees):
-            print(x, y)
             if x['amount_paid'] < int(y['amount_paid']) or x['amount_waived'] < int(y['amount_waived']):
                 # student_fees.objects.filter(id=x['id']).update(amount_paid=int(y['amount_paid']), amount_waived=int(y['amount_waived']))
                 if x['amount_paid'] + x['amount_waived'] == 0:
@@ -415,7 +424,7 @@ class FeeTotalCount(APIView):
         feepayload = []
         for i in range(13):
             std = i + 1
-            total_fees = student_fees.objects.filter(standard=std).aggregate(total=Sum('fee_type__amount'))
+            total_fees = student_fees.objects.filter(standard__name=std,is_assigned=True).aggregate(total=Sum('fee_type__amount'))
             fees_breakup = Receipt.objects.filter(student__standard=std).aggregate(total=Sum('receiptdetail__total_fee'), paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived'))
             total_fee = total_fees['total'] if total_fees['total'] else 0
             paid_fee = fees_breakup['paid'] if fees_breakup['paid'] else 0
@@ -445,4 +454,5 @@ class FeeTotalCount(APIView):
             "message": "Fee Breakup Fetched",
             "data": feepayload
         }
+        print(feepayload)
         return JsonResponse(finalResponse, safe=False, status=200)

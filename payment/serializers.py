@@ -21,15 +21,25 @@ class FeeTypePostSerializer(serializers.ModelSerializer):
         fields = ['id', 'fee_master', 'amount', 'standard', 'year', 'is_active']
 
 
+class StandardMasterDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = standard_master
+        fields = ['id', 'name']
+
 class FeeTypeGetSerializer(serializers.ModelSerializer):
     fee_master = FeeTypeMasterSerializer()
-    # fee_master = serializers.PrimaryKeyRelatedField(queryset=fee_type_master.objects.all())
-    standard = serializers.PrimaryKeyRelatedField(queryset=standard_master.objects.all())
+    standard = StandardMasterDetailSerializer()  # Use the new serializer instead of PrimaryKeyRelatedField
+    standard_name = serializers.SerializerMethodField()  # Add this field
 
     class Meta:
         model = fee_type
-        fields = ['id', 'fee_master', 'amount', 'standard', 'year', 'is_active']
+        fields = ['id', 'fee_master', 'amount', 'standard', 'standard_name', 'year', 'is_active']
 
+    def get_standard_name(self, obj):
+        # Return 'Balvatika' for standard_id 7, otherwise return the standard name
+        if obj.standard.id == 7:
+            return 'Balvatika'
+        return obj.standard.name
 #  all in above of receips or receipt details for api
 
 class ReceiptFeesSerializer(serializers.ModelSerializer):

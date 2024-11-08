@@ -125,7 +125,7 @@ class FeeReportDetailAPIViewDemo(APIView):
         try:
             # Get student fees data with fee type details
             student_fees_queryset = student_fees.objects.filter(
-                standard_id=standard,
+                standard__name=standard,
                 is_assigned=True
             ).select_related(
                 'student', 
@@ -260,7 +260,7 @@ class FeeReportExcelView(APIView):
         try:
             # Get student fees data with fee type details
             student_fees_queryset = student_fees.objects.filter(
-                standard_id=standard,
+                standard__name=standard,
                 is_assigned=True
             ).select_related(
                 'student', 
@@ -489,7 +489,7 @@ class FeeTypeReportExcelViewSingle(APIView):
                 title = f"Fee Report - Standard {standard} - {fee_type_name}"
                 # Get student fees for specific standard
                 student_fees_queryset = student_fees.objects.filter(
-                    standard_id=standard,
+                    standard__name=standard,
                     is_assigned=True,
                     fee_type__fee_master_id=fee_master_id
                 ).select_related(
