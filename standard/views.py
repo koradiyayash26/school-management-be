@@ -45,7 +45,7 @@ class StandardsGetData(APIView):
     def get(self, request, pk):
         try:
             # Filter students by standard
-            students = Students.objects.filter(standard=pk)
+            students = Students.objects.filter(standard=pk,academic_year=AcademicYear.objects.filter(is_current=True).first())
             # Serialize the queryset
             serialized_data = StudentsSerializer(students, many=True)
             # Return serialized data as JSON response
@@ -78,7 +78,7 @@ class StandardsNo(APIView):
                 "12": {"boys_count": 0, "girls_count": 0}
             }
 
-            students = Students.objects.all()
+            students = Students.objects.filter(academic_year=AcademicYear.objects.filter(is_current=True).first())
 
             boys_count = 0
             girls_count = 0

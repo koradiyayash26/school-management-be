@@ -38,6 +38,8 @@ from datetime import date
 
 from django.http import HttpResponse
 
+from standard.models import AcademicYear
+
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, IntegrityError
@@ -527,7 +529,8 @@ class StudentGet(APIView):
 
     def get(self, request):
         # Get values list data
-        students = Students.objects.all().values(
+        current_academic_year = AcademicYear.objects.filter(is_current=True).first()
+        students = Students.objects.filter(academic_year=current_academic_year).values(
             'id',
             'grno',
             'last_name',

@@ -20,6 +20,7 @@ from openpyxl.styles import Font, Alignment, Border, Side
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import MergedCell
+from standard.models import AcademicYear
 
 
 
@@ -126,7 +127,8 @@ class FeeReportDetailAPIViewDemo(APIView):
             # Get student fees data with fee type details
             student_fees_queryset = student_fees.objects.filter(
                 standard__name=standard,
-                is_assigned=True
+                is_assigned=True,
+                student__academic_year=AcademicYear.objects.filter(is_current=True).first()
             ).select_related(
                 'student', 
                 'standard', 
@@ -136,7 +138,8 @@ class FeeReportDetailAPIViewDemo(APIView):
 
             # Get receipt details
             receipt_details = ReceiptDetail.objects.filter(
-                receipt__student__standard=standard
+                receipt__student__standard=standard,
+                receipt__student__academic_year=AcademicYear.objects.filter(is_current=True).first()
             ).select_related(
                 'receipt', 
                 'fee_type', 
@@ -261,7 +264,8 @@ class FeeReportExcelView(APIView):
             # Get student fees data with fee type details
             student_fees_queryset = student_fees.objects.filter(
                 standard__name=standard,
-                is_assigned=True
+                is_assigned=True,
+                student__academic_year=AcademicYear.objects.filter(is_current=True).first()
             ).select_related(
                 'student', 
                 'standard', 
@@ -271,7 +275,8 @@ class FeeReportExcelView(APIView):
 
             # Get receipt details
             receipt_details = ReceiptDetail.objects.filter(
-                receipt__student__standard=standard
+                receipt__student__standard=standard,
+                receipt__student__academic_year=AcademicYear.objects.filter(is_current=True).first()
             ).select_related(
                 'receipt', 
                 'fee_type', 
@@ -348,10 +353,14 @@ class FeeReportExcelView(APIView):
             # Create Excel workbook
             wb = Workbook()
             ws = wb.active
-            ws.title = f"Fee Report - {standard}"
-
-            # Add title
-            title = f"Fee Report - Standard {standard}"
+            if standard == 13:
+                ws.title = f"Fee Report - Balvatika"
+                # Add title
+                title = f"Fee Report - Standard Balvatika"
+            else:
+                ws.title = f"Fee Report - {standard}"
+                # Add title
+                title = f"Fee Report - Standard {standard}"
             ws.merge_cells('A1:F1')
             ws['A1'] = title
             ws['A1'].font = Font(bold=True, size=14)
@@ -459,7 +468,6 @@ class FeeTypeReportExcelViewSingle(APIView):
             # Create workbook and sheet
             wb = Workbook()
             ws = wb.active
-            print(standard,fee_master_id)
             
             # Get fee type master name for title
             fee_master_obj = fee_type_master.objects.filter(id=fee_master_id).first()
@@ -477,7 +485,8 @@ class FeeTypeReportExcelViewSingle(APIView):
                 # Get student fees for all standards
                 student_fees_queryset = student_fees.objects.filter(
                     is_assigned=True,
-                    fee_type__fee_master_id=fee_master_id
+                    fee_type__fee_master_id=fee_master_id,
+                    student__academic_year=AcademicYear.objects.filter(is_current=True).first()
                 ).select_related(
                     'student', 
                     'standard', 
@@ -485,13 +494,18 @@ class FeeTypeReportExcelViewSingle(APIView):
                     'fee_type__fee_master'
                 )
             else:
-                ws.title = f"{fee_type_name} - {standard}"
-                title = f"Fee Report - Standard {standard} - {fee_type_name}"
+                if standard == "13":
+                    ws.title = f"{fee_type_name} - Balvatika"
+                    title = f"Fee Report - Standard Balvatika - {fee_type_name}"
+                else:
+                    ws.title = f"{fee_type_name} - {standard}"
+                    title = f"Fee Report - Standard {standard} - {fee_type_name}"
                 # Get student fees for specific standard
                 student_fees_queryset = student_fees.objects.filter(
                     standard__name=standard,
                     is_assigned=True,
-                    fee_type__fee_master_id=fee_master_id
+                    fee_type__fee_master_id=fee_master_id,
+                    student__academic_year=AcademicYear.objects.filter(is_current=True).first()
                 ).select_related(
                     'student', 
                     'standard', 
@@ -515,12 +529,14 @@ class FeeTypeReportExcelViewSingle(APIView):
             # Get receipt details
             if standard.upper() == 'ALL':
                 receipt_details = ReceiptDetail.objects.filter(
-                    fee_type__fee_master_id=fee_master_id
+                    fee_type__fee_master_id=fee_master_id,
+                    receipt__student__academic_year=AcademicYear.objects.filter(is_current=True).first()
                 )
             else:
                 receipt_details = ReceiptDetail.objects.filter(
                     receipt__student__standard=standard,
-                    fee_type__fee_master_id=fee_master_id
+                    fee_type__fee_master_id=fee_master_id,
+                    receipt__student__academic_year=AcademicYear.objects.filter(is_current=True).first()
                 )
 
             receipt_details = receipt_details.values(

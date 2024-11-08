@@ -7,7 +7,7 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-
+from standard.models import AcademicYear
 from student.models import Students
 from .models import (Receipt, ReceiptDetail, fee_type,fee_type_master,standard_master,
                      student_fees)
@@ -60,7 +60,7 @@ class FeeTypeGet(APIView):
 
 
     def get(self, request):
-        fee_types = fee_type.objects.all().values('id','fee_master__name','standard__name','year__year','amount')
+        fee_types = fee_type.objects.filter(year=AcademicYear.objects.filter(is_current=True).first()).values('id','fee_master__name','standard__name','year__year','amount')
         # serializer = FeeTypeGetSerializer(fee_types, many=True)
         return JsonResponse({"message": "Fee Types Retrieved Successfully", "data": list(fee_types)}, status=status.HTTP_200_OK)
 
@@ -342,7 +342,7 @@ class PaymentFeeListGet(APIView):
 
 
     def get(self, request):
-        queryset = Receipt.objects.filter().values('id', 'note', 'fee_paid_date', 'student__first_name', 'student__last_name', 'student__middle_name', 'student__standard', 'student__grno').annotate(paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived')).order_by('-fee_paid_date')
+        queryset = Receipt.objects.filter(student__academic_year=AcademicYear.objects.filter(is_current=True).first()).values('id', 'note', 'fee_paid_date', 'student__first_name', 'student__last_name', 'student__middle_name', 'student__standard', 'student__grno').annotate(paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived')).order_by('-fee_paid_date')
         data = list(queryset)  # Convert queryset to a list
         return JsonResponse({"message": "Payment history fetched successfully", "data": data}, status=200)
 
@@ -424,8 +424,8 @@ class FeeTotalCount(APIView):
         feepayload = []
         for i in range(13):
             std = i + 1
-            total_fees = student_fees.objects.filter(standard__name=std,is_assigned=True).aggregate(total=Sum('fee_type__amount'))
-            fees_breakup = Receipt.objects.filter(student__standard=std).aggregate(total=Sum('receiptdetail__total_fee'), paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived'))
+            total_fees = student_fees.objects.filter(standard__name=std,is_assigned=True,student__academic_year=AcademicYear.objects.filter(is_current=True).first()).aggregate(total=Sum('fee_type__amount'))
+            fees_breakup = Receipt.objects.filter(student__standard=std,student__academic_year=AcademicYear.objects.filter(is_current=True).first()).aggregate(total=Sum('receiptdetail__total_fee'), paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived'))
             total_fee = total_fees['total'] if total_fees['total'] else 0
             paid_fee = fees_breakup['paid'] if fees_breakup['paid'] else 0
             waived_fee = fees_breakup['waived'] if fees_breakup['waived'] else 0
