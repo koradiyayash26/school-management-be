@@ -461,39 +461,98 @@ class ExportGeneralRegisterToExcel(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        
-        queryset = Students.objects.all()
-        
-        data = list(queryset.values())
+        try:
+            current_academic_year = AcademicYear.objects.filter(is_current=True).first()
+            if not current_academic_year:
+                return Response({"error": "No current academic year set"}, status=400)
+            
+            # Use select_related to get academic year data efficiently
+            queryset = Students.objects.filter(
+                academic_year=current_academic_year
+            ).select_related('academic_year')
+            
+            # Modify the values query to include academic year
+            data = list(queryset.values(
+                'id',
+                'grno',
+                'first_name',
+                'last_name',
+                'middle_name',
+                'mother_name',
+                'gender',
+                'birth_date',
+                'birth_place',
+                'mobile_no',
+                'address',
+                'city',
+                'district',
+                'standard',
+                'section',
+                'academic_year__year',  # Include academic year
+                'last_school',
+                'admission_std',
+                'admission_date',
+                'left_school_std',
+                'left_school_date',
+                'religion',
+                'category',
+                'caste',
+                'udise_no',
+                'aadhar_no',
+                'account_no',
+                'name_on_passbook',
+                'bank_name',
+                'ifsc_code',
+                'bank_address',
+                'reason',
+                'note',
+                'assesment',
+                'progress',
+                'status'
+            ))
 
-        def convert_to_naive(value):
-            if isinstance(value, datetime):
-                return make_naive(value, get_default_timezone())
-            elif isinstance(value, date):
+            def convert_to_naive(value):
+                if isinstance(value, datetime):
+                    return make_naive(value, get_default_timezone())
+                elif isinstance(value, date):
+                    return value
                 return value
-            return value
 
+            # Process the data
+            for item in data:
+                # Remove unwanted fields
+                for field in ['student_img', 'created_at', 'updated_at']:
+                    item.pop(field, None)
+                
+                # Convert dates
+                for field in ['birth_date', 'admission_date', 'left_school_date']:
+                    if item.get(field) is not None:
+                        item[field] = convert_to_naive(item[field])
+                
+                # Rename academic_year__year to academic_year for better column header
+                if 'academic_year__year' in item:
+                    item['Academic Year'] = item.pop('academic_year__year')
 
-        for item in data:
-            
-            for field in ['student_img', 'created_at', 'updated_at']:
-                item.pop(field, None)
-            
-            for field in ['birth_date', 'admission_date', 'left_school_date']:
-                if item.get(field) is not None:
-                    item[field] = convert_to_naive(item[field])
+            df = pd.DataFrame(data)
+                        
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(
+                    writer, 
+                    index=False, 
+                    sheet_name=f'General Register ({current_academic_year.year})'
+                )
 
-        df = pd.DataFrame(data)
-        
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='General Register')
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename=general_register_{current_academic_year.year}.xlsx'
+            response.write(output.getvalue())
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=general_register.xlsx'
-        response.write(output.getvalue())
+            return response
 
-        return response
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 
