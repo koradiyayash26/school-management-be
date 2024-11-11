@@ -316,6 +316,11 @@ class BulkImportStudent(APIView):
         if not file:
             return Response({"error": "No file uploaded"}, status=400)
 
+        # Get current academic year
+        current_academic_year = AcademicYear.objects.filter(is_current=True).first()
+        if not current_academic_year:
+            return Response({"error": "No current academic year set"}, status=400)
+
         df = pd.read_excel(file, engine='openpyxl')
         df = df.where(pd.notnull(df), None)
         
@@ -333,7 +338,7 @@ class BulkImportStudent(APIView):
             except ValueError:
                 return None
 
-        required_fields = [f.name for f in Students._meta.fields if not f.blank and not f.null and f.name not in ['id', 'created_at', 'updated_at']]
+        required_fields = [f.name for f in Students._meta.fields if not f.blank and not f.null and f.name not in ['id', 'created_at', 'updated_at', 'academic_year']]
         excel_fields = set(df.columns)
 
         # Check if all required fields are in the Excel file
@@ -350,6 +355,18 @@ class BulkImportStudent(APIView):
                     student_data = {}
                     record_errors = []
 
+                    # Handle academic year
+                    academic_year_value = row.get('Academic_Year')
+                    if academic_year_value and not pd.isna(academic_year_value):
+                        try:
+                            academic_year = AcademicYear.objects.get(year=academic_year_value)
+                            student_data['academic_year'] = academic_year
+                        except AcademicYear.DoesNotExist:
+                            record_errors.append(f"Invalid academic year: {academic_year_value}")
+                    else:
+                        # Use current academic year if not specified
+                        student_data['academic_year'] = current_academic_year
+
                     # Check if the required fields are present and not empty
                     for field in required_fields:
                         value = row.get(field)
@@ -365,7 +382,7 @@ class BulkImportStudent(APIView):
                         continue
 
                     for field in Students._meta.fields:
-                        if field.name in ['id', 'created_at', 'updated_at']:
+                        if field.name in ['id', 'created_at', 'updated_at', 'academic_year']:
                             continue
                         
                         value = row.get(field.name)
@@ -407,11 +424,15 @@ class BulkImportStudent(APIView):
                     if 'id' in row and not pd.isna(row['id']):
                         existing_student = Students.objects.filter(id=row['id']).first()
                     if not existing_student:
-                        existing_student = Students.objects.filter(grno=student_data['grno']).first()
+                        existing_student = Students.objects.filter(
+                            grno=student_data['grno'],
+                            academic_year=student_data['academic_year']
+                        ).first()
                     if not existing_student:
                         existing_student = Students.objects.filter(
                             first_name=student_data['first_name'],
-                            last_name=student_data['last_name']
+                            last_name=student_data['last_name'],
+                            academic_year=student_data['academic_year']
                         ).first()
 
                     if existing_student:
@@ -531,7 +552,7 @@ class ExportGeneralRegisterToExcel(APIView):
                 
                 # Rename academic_year__year to academic_year for better column header
                 if 'academic_year__year' in item:
-                    item['Academic Year'] = item.pop('academic_year__year')
+                    item['academic_Year'] = item.pop('academic_year__year')
 
             df = pd.DataFrame(data)
                         
