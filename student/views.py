@@ -1068,7 +1068,7 @@ class ExamMarksAssignAPIView(APIView):
 
     def get(self, request, standard, pk):
         exam_template = get_object_or_404(ExamMarksTemplateAdd, id=pk)
-        students = Students.objects.filter(standard=standard)
+        students = Students.objects.filter(standard=standard,academic_year=AcademicYear.objects.filter(is_current=True).first())
         
         exam_template_data = ExamMarksTemplateAddSerializer(exam_template).data
         students_data = StudentsSerializer(students, many=True).data
@@ -1130,7 +1130,8 @@ class ExamMarksViewAPIView(APIView):
             standard=standard,
             date=exam_template.date,
             total_marks=exam_template.total_marks,
-            subject=exam_template.subject
+            subject=exam_template.subject,
+            student__academic_year=AcademicYear.objects.filter(is_current=True).first()
         )
         
         exam_template_data = ExamMarksTemplateAddSerializer(exam_template).data
