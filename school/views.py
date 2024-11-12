@@ -38,10 +38,11 @@ class ChatListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get all users who have chatted with the current user
+        # Get all active users except the current user
         chat_users = User.objects.filter(
-            Q(sent_messages__receiver=request.user) | 
-            Q(received_messages__sender=request.user)
+            is_active=True
+        ).exclude(
+            id=request.user.id  # Exclude current user
         ).distinct()
         
         chat_data = []
