@@ -24,6 +24,126 @@ from standard.models import AcademicYear
 
 
 
+
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.db.models import Q
+from .models import ChatMessage
+from django.contrib.auth.models import User
+from .serializers import ChatMessageSerializer, UserSerializer
+
+class ChatListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Get all users who have chatted with the current user
+        chat_users = User.objects.filter(
+            Q(sent_messages__receiver=request.user) | 
+            Q(received_messages__sender=request.user)
+        ).distinct()
+        
+        chat_data = []
+        for user in chat_users:
+            last_message = ChatMessage.objects.filter(
+                Q(sender=request.user, receiver=user) |
+                Q(sender=user, receiver=request.user)
+            ).last()
+            
+            chat_data.append({
+                'user': UserSerializer(user).data,
+                'last_message': ChatMessageSerializer(last_message).data if last_message else None,
+                'unread_count': ChatMessage.objects.filter(
+                    sender=user,
+                    receiver=request.user,
+                    is_read=False
+                ).count()
+            })
+        
+        return Response(chat_data)
+
+class ChatMessageView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        messages = ChatMessage.objects.filter(
+            Q(sender=request.user, receiver_id=user_id) |
+            Q(sender_id=user_id, receiver=request.user)
+        )
+        serializer = ChatMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, user_id):
+        message = request.data.get('message')
+        if not message:
+            return Response({'error': 'Message is required'}, status=400)
+
+        chat_message = ChatMessage.objects.create(
+            sender=request.user,
+            receiver_id=user_id,
+            message=message
+        )
+        serializer = ChatMessageSerializer(chat_message)
+        return Response(serializer.data, status=201)
+
+
+class MarkChatAsReadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            # Mark all messages from the specified user as read
+            ChatMessage.objects.filter(
+                sender_id=user_id,
+                receiver=request.user,
+                is_read=False
+            ).update(is_read=True)
+            
+            return Response({'status': 'success'})
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class MessageStatusView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, message_id, status_type=None):
+        try:
+            message = ChatMessage.objects.get(id=message_id)
+            
+            # Get status type from URL parameter
+            status_type = self.kwargs.get('status_type')
+            
+            if status_type == 'delivered':
+                message.is_delivered = True
+            elif status_type == 'read':
+                message.is_delivered = True
+                message.is_read = True
+            
+            message.save()
+            
+            return Response({
+                'id': message.id,
+                'is_delivered': message.is_delivered,
+                'is_read': message.is_read
+            })
+        except ChatMessage.DoesNotExist:
+            return Response(
+                {'error': 'Message not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class HomePageView(TemplateView):
     template_name = "home.html"  
 

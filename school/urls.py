@@ -1,6 +1,7 @@
 from django.urls import path, include
-from . import views
 
+from . import views,consumers
+from django.urls import re_path
 from school import views
 
 schoolStudent_urlpatterns = [
@@ -12,9 +13,24 @@ schoolStudent_urlpatterns = [
     # path('<int:pk>/delete/', views.PaymentFeeDelete.as_view(), name='payment_fee_delete'),
 ]
 
+chats_urlpatterns = [
+    path('api/chats/', views.ChatListView.as_view(), name='chat-list'),
+    path('api/chats/<int:user_id>/', views.ChatMessageView.as_view(), name='chat-messages'),
+    path('api/chats/<int:user_id>/read/', views.MarkChatAsReadView.as_view(), name='mark-chat-read'),
+    path('api/messages/<int:message_id>/delivered/', views.MessageStatusView.as_view(), name='mark-message-delivered'),
+    path('api/messages/<int:message_id>/read/', views.MessageStatusView.as_view(), name='mark-message-read'),
+]
+
+# for websockter for chats
+websocket_urlpatterns = [
+    path('chat/', consumers.ChatConsumer.as_asgi()),
+]
+
 urlpatterns = [    
     path('report/standard/<str:standard>/', views.FeeReportDetailAPIViewDemo.as_view(), name="report"),
     path('report/fee-report-excel/<int:standard>/', views.FeeReportExcelView.as_view(), name='fee-report-excel'),
     path('report/fee-type-report-excel/<str:standard>/<int:fee_master_id>/', views.FeeTypeReportExcelViewSingle.as_view(), name='fee-type-report-excel'),
     path('school-student/', include(schoolStudent_urlpatterns)),
+    path('chats/', include(chats_urlpatterns)),
+    path('ws/', include(websocket_urlpatterns)),  # Add this line
 ]

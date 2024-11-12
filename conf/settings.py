@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-huwwe964-+5b@u9cg96l+s!rj(3bskzqnuvc$#*%an*5(+^o=u
 DEBUG = True
 # DEBUG = config('DEBUG',cast=bool)
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
 # ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
 
 
@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    'channels',
+    
+    
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -55,6 +58,33 @@ INSTALLED_APPS = [
     'student',
     'payment'
 ]
+
+ASGI_APPLICATION = 'school.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    },
+}
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+SOCKETIO_CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173'  # Your frontend URL
+]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
