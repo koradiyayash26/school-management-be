@@ -145,6 +145,115 @@ class MessageStatusView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class MessageActionView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, message_id):
+        try:
+            # Allow deletion if user is either sender or receiver
+            message = ChatMessage.objects.get(
+                Q(id=message_id),
+                Q(sender=request.user) | Q(receiver=request.user)
+            )
+            message.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ChatMessage.DoesNotExist:
+            return Response(
+                {'error': 'Message not found or unauthorized'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def patch(self, request, message_id):
+        try:
+            message = ChatMessage.objects.get(
+                id=message_id,
+                sender=request.user  # Only allow editing own messages
+            )
+            new_message = request.data.get('message')
+            if not new_message:
+                return Response(
+                    {'error': 'Message content is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            message.message = new_message
+            message.edited = True  # Add this field to your model if not exists
+            message.save()
+            
+            serializer = ChatMessageSerializer(message)
+            return Response(serializer.data)
+        except ChatMessage.DoesNotExist:
+            return Response(
+                {'error': 'Message not found or unauthorized'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+class BulkMessageDeleteView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        message_ids = request.data.get('message_ids', [])
+        if not message_ids:
+            return Response(
+                {'error': 'No message IDs provided'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Allow deletion if user is either sender or receiver
+        messages_to_delete = ChatMessage.objects.filter(
+            Q(id__in=message_ids),
+            Q(sender=request.user) | Q(receiver=request.user)
+        )
+        deleted_count, _ = messages_to_delete.delete()
+        
+        return Response({'deleted_count': deleted_count})
+
+
+
+class ClearChatView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, user_id):
+        try:
+            # Delete all messages between the two users
+            deleted_count = ChatMessage.objects.filter(
+                Q(sender=request.user, receiver_id=user_id) |
+                Q(sender_id=user_id, receiver=request.user)
+            ).delete()[0]
+            
+            return Response({
+                'status': 'success',
+                'deleted_count': deleted_count
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+# class BlockUserView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, user_id):
+#         try:
+#             # Add blocking logic here
+#             # You might need to create a BlockedUser model
+#             BlockedUser.objects.create(
+#                 user=request.user,
+#                 blocked_user_id=user_id
+#             )
+#             return Response({'status': 'success'})
+#         except Exception as e:
+#             return Response(
+#                 {'error': str(e)}, 
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+
+
 class HomePageView(TemplateView):
     template_name = "home.html"  
 

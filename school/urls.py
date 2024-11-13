@@ -19,6 +19,13 @@ chats_urlpatterns = [
     path('api/chats/<int:user_id>/read/', views.MarkChatAsReadView.as_view(), name='mark-chat-read'),
     path('api/messages/<int:message_id>/delivered/', views.MessageStatusView.as_view(), name='mark-message-delivered'),
     path('api/messages/<int:message_id>/read/', views.MessageStatusView.as_view(), name='mark-message-read'),
+    path('api/messages/<int:message_id>/', views.MessageActionView.as_view(), name='message-actions'),
+    path('api/messages/bulk-delete/', views.BulkMessageDeleteView.as_view(), name='bulk-message-delete'),
+    path('api/chats/<int:user_id>/clear/', views.ClearChatView.as_view(), name='clear-chat'),
+    # path('api/users/<int:user_id>/block/', views.BlockUserView.as_view(), name='block-user'),
+    # path('api/chats/<int:user_id>/mute/', views.MuteNotificationsView.as_view(), name='mute-notifications'),
+    # path('api/chats/<int:user_id>/disappearing-messages/', views.DisappearingMessagesView.as_view(), name='disappearing-messages'),
+
 ]
 
 # for websockter for chats
