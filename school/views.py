@@ -234,26 +234,7 @@ class ClearChatView(APIView):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-# class BlockUserView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, user_id):
-#         try:
-#             # Add blocking logic here
-#             # You might need to create a BlockedUser model
-#             BlockedUser.objects.create(
-#                 user=request.user,
-#                 blocked_user_id=user_id
-#             )
-#             return Response({'status': 'success'})
-#         except Exception as e:
-#             return Response(
-#                 {'error': str(e)}, 
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
-
-
+            
 class HomePageView(TemplateView):
     template_name = "home.html"  
 

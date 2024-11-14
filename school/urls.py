@@ -22,7 +22,6 @@ chats_urlpatterns = [
     path('api/messages/<int:message_id>/', views.MessageActionView.as_view(), name='message-actions'),
     path('api/messages/bulk-delete/', views.BulkMessageDeleteView.as_view(), name='bulk-message-delete'),
     path('api/chats/<int:user_id>/clear/', views.ClearChatView.as_view(), name='clear-chat'),
-    # path('api/users/<int:user_id>/block/', views.BlockUserView.as_view(), name='block-user'),
     # path('api/chats/<int:user_id>/mute/', views.MuteNotificationsView.as_view(), name='mute-notifications'),
     # path('api/chats/<int:user_id>/disappearing-messages/', views.DisappearingMessagesView.as_view(), name='disappearing-messages'),
 
