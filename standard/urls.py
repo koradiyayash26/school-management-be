@@ -17,6 +17,7 @@ academic_year_urlpatterns = [
 
 urlpatterns = [
     path('standard-count/', views.CountStudents.as_view(), name="CountStudents"),
+    path('caste-report/', views.CasteReportAPI.as_view(), name="caste-report"),
     path('standards/', include(standards_urlpatterns)),
     path('academic-year/', include(academic_year_urlpatterns)),
 ]

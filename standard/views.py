@@ -1,8 +1,10 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework import generics
+from django.db.models.functions import Cast
+from django.db.models import IntegerField
 
-from student.models import STATUS_CHOICES, Students
+from student.models import STATUS_CHOICES, Students,CATEGORY_CHOICE
 from student.serializers import StudentsSerializer
 from .models import standard_master,AcademicYear
 from .serializers import StandardMasterSerializer,AcademicYearSerializer
@@ -11,6 +13,103 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from rest_framework.permissions import BasePermission
+
+
+
+class CasteReportAPI(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    required_permission = 'can_view_category_report'
+
+    def get(self, request):
+        try:
+            current_year = AcademicYear.objects.filter(is_current=True).first()
+            
+            # Get all standards and sort them
+            standards = standard_master.objects.filter(
+                is_active=True
+            ).annotate(
+                name_as_int=Cast('name', IntegerField())
+            ).order_by('name_as_int')
+            
+            # Initialize report structure
+            report_data = []
+            overall_totals = {
+                'જનરલ': {'male': 0, 'female': 0, 'total': 0},
+                'ઓ.બી.સી.': {'male': 0, 'female': 0, 'total': 0},
+                'એસસી/એસટી': {'male': 0, 'female': 0, 'total': 0},
+                'ઇ.ડબ્લ્યુ.એસ.': {'male': 0, 'female': 0, 'total': 0}
+            }
+            
+            # Process each standard
+            for std in standards:
+                standard_data = {
+                    'standard': std.name,
+                    'categories': {
+                        'જનરલ': {'male': 0, 'female': 0, 'total': 0},
+                        'ઓ.બી.સી.': {'male': 0, 'female': 0, 'total': 0},
+                        'એસસી/એસટી': {'male': 0, 'female': 0, 'total': 0},
+                        'ઇ.ડબ્લ્યુ.એસ.': {'male': 0, 'female': 0, 'total': 0}
+                    },
+                    'total': {'male': 0, 'female': 0, 'total': 0}
+                }
+                
+                # Get data for each category
+                for category, category_name in CATEGORY_CHOICE:
+                    students = Students.objects.filter(
+                        academic_year=current_year,
+                        standard=std.name,
+                        category=category
+                    )
+                    
+                    male_count = students.filter(gender='કુમાર').count()
+                    female_count = students.filter(gender='કન્યા').count()
+                    total_count = male_count + female_count
+                    
+                    # Update category data
+                    standard_data['categories'][category_name] = {
+                        'male': male_count,
+                        'female': female_count,
+                        'total': total_count
+                    }
+                    
+                    # Update standard totals
+                    standard_data['total']['male'] += male_count
+                    standard_data['total']['female'] += female_count
+                    standard_data['total']['total'] += total_count
+                    
+                    # Update overall totals
+                    overall_totals[category_name]['male'] += male_count
+                    overall_totals[category_name]['female'] += female_count
+                    overall_totals[category_name]['total'] += total_count
+                
+                report_data.append(standard_data)
+            
+            # Calculate grand total
+            grand_total = {
+                'male': sum(cat['male'] for cat in overall_totals.values()),
+                'female': sum(cat['female'] for cat in overall_totals.values()),
+                'total': sum(cat['total'] for cat in overall_totals.values())
+            }
+
+            response_data = {
+                'message': 'Category report retrieved successfully',
+                'data': {
+                    'report_data': report_data,
+                    'overall_totals': overall_totals,
+                    'grand_total': grand_total
+                }
+            }
+
+            return JsonResponse(response_data, status=200)
+
+        except Exception as e:
+            return JsonResponse({
+                'message': 'An error occurred',
+                'error': str(e)
+            }, status=500)
+
+
 
 
 class CountStudents(APIView):
