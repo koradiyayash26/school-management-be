@@ -58,11 +58,36 @@ class FeeTypeGet(APIView):
     permission_classes = [IsAuthenticated, HasFeeTypePermission]
     required_permission = 'can_view_fee_types'
 
-
     def get(self, request):
-        fee_types = fee_type.objects.filter(year=AcademicYear.objects.filter(is_current=True).first()).values('id','fee_master__name','standard__name','year__year','amount')
-        # serializer = FeeTypeGetSerializer(fee_types, many=True)
-        return JsonResponse({"message": "Fee Types Retrieved Successfully", "data": list(fee_types)}, status=status.HTTP_200_OK)
+        # Get school_type from query parameters
+        school_type = request.GET.get('school_type')
+        
+        # Start with base queryset
+        queryset = fee_type.objects.filter(
+            year=AcademicYear.objects.filter(is_current=True).first()
+        )
+        
+        # Filter by school_type if provided
+        if school_type:
+            queryset = queryset.filter(
+                standard__in=standard_master.objects.filter(
+                    school_type=school_type,
+                    is_active=True
+                )
+            )
+        
+        fee_types = queryset.values(
+            'id',
+            'fee_master__name',
+            'standard__name',
+            'year__year',
+            'amount'
+        )
+        
+        return JsonResponse({
+            "message": "Fee Types Retrieved Successfully", 
+            "data": list(fee_types)
+        }, status=status.HTTP_200_OK)
 
 
 # get api by id fee type
@@ -340,11 +365,44 @@ class PaymentFeeListGet(APIView):
     permission_classes = [IsAuthenticated, HasFeeTypePermission]
     required_permission = 'can_view_payment_list'
 
-
     def get(self, request):
-        queryset = Receipt.objects.filter(student__academic_year=AcademicYear.objects.filter(is_current=True).first()).values('id', 'note', 'fee_paid_date', 'student__first_name', 'student__last_name', 'student__middle_name', 'student__standard', 'student__grno').annotate(paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived')).order_by('-fee_paid_date')
-        data = list(queryset)  # Convert queryset to a list
-        return JsonResponse({"message": "Payment history fetched successfully", "data": data}, status=200)
+        # Get school_type from query parameters
+        school_type = request.GET.get('school_type')
+        
+        # Start with base queryset
+        queryset = Receipt.objects.filter(
+            student__academic_year=AcademicYear.objects.filter(is_current=True).first()
+        )
+        
+        # Filter by school_type if provided
+        if school_type:
+            queryset = queryset.filter(
+                student__standard__in=standard_master.objects.filter(
+                    school_type=school_type,
+                    is_active=True
+                ).values_list('name', flat=True)
+            )
+        
+        # Get the annotated values
+        queryset = queryset.values(
+            'id', 
+            'note', 
+            'fee_paid_date', 
+            'student__first_name', 
+            'student__last_name', 
+            'student__middle_name', 
+            'student__standard', 
+            'student__grno'
+        ).annotate(
+            paid=Sum('receiptdetail__amount_paid'),
+            waived=Sum('receiptdetail__amount_waived')
+        ).order_by('-fee_paid_date')
+        
+        data = list(queryset)
+        return JsonResponse({
+            "message": "Payment history fetched successfully", 
+            "data": data
+        }, status=200)
 
 
 # api get by id for receiptDetails
@@ -414,45 +472,74 @@ class FeeTotalCount(APIView):
     permission_classes = [IsAuthenticated,HasFeeReportPermission]
     required_permission = 'can_view_fee_report'
     
-    
     def get(self, request):
         """
         Payload Example: [
             {"std": "1", "total": "51", "pending": "10", "paid": "41"}
         ]
         """
+        # Get school_type from query parameters
+        school_type = request.GET.get('school_type')
+        current_year = AcademicYear.objects.filter(is_current=True).first()
+        
+        # Get valid standards based on school_type
+        valid_standards = []
+        if school_type:
+            standards = standard_master.objects.filter(
+                school_type=school_type,
+                is_active=True
+            ).values_list('name', flat=True)
+            valid_standards = [int(std) for std in standards if std.isdigit()]
+            # Add 13 if it exists in valid standards
+            if '13' in standards:
+                valid_standards.append(13)
+            valid_standards.sort(key=lambda x: (x != 13, x))  # Sort with 13 first
+        else:
+            valid_standards = list(range(1, 14))  # 1 to 13
+            # Move 13 to the front
+            valid_standards.remove(13)
+            valid_standards.insert(0, 13)
+
         feepayload = []
-        for i in range(13):
-            std = i + 1
-            total_fees = student_fees.objects.filter(standard__name=std,is_assigned=True,student__academic_year=AcademicYear.objects.filter(is_current=True).first()).aggregate(total=Sum('fee_type__amount'))
-            fees_breakup = Receipt.objects.filter(student__standard=std,student__academic_year=AcademicYear.objects.filter(is_current=True).first()).aggregate(total=Sum('receiptdetail__total_fee'), paid=Sum('receiptdetail__amount_paid'), waived=Sum('receiptdetail__amount_waived'))
+        for std in valid_standards:
+            total_fees = student_fees.objects.filter(
+                standard__name=std,
+                is_assigned=True,
+                student__academic_year=current_year
+            ).aggregate(total=Sum('fee_type__amount'))
+            
+            fees_breakup = Receipt.objects.filter(
+                student__standard=std,
+                student__academic_year=current_year
+            ).aggregate(
+                total=Sum('receiptdetail__total_fee'),
+                paid=Sum('receiptdetail__amount_paid'),
+                waived=Sum('receiptdetail__amount_waived')
+            )
+            
             total_fee = total_fees['total'] if total_fees['total'] else 0
             paid_fee = fees_breakup['paid'] if fees_breakup['paid'] else 0
             waived_fee = fees_breakup['waived'] if fees_breakup['waived'] else 0
 
-            feepayload.append(
-                {
-                    "std": std,
-                    "total": total_fee,
-                    "paid": paid_fee,
-                    "pending": total_fee - paid_fee - waived_fee,
-                    "waived": waived_fee
-                }
-            )
+            feepayload.append({
+                "std": std,
+                "total": total_fee,
+                "paid": paid_fee,
+                "pending": total_fee - paid_fee - waived_fee,
+                "waived": waived_fee
+            })
         
-        feepayload.append(
-            {
-                "std": "Total",
-                "total": sum([i['total'] for i in feepayload]),
-                "paid": sum([i['paid'] for i in feepayload]),
-                "pending": sum([i['pending'] for i in feepayload]),
-                "waived": sum([i['waived'] for i in feepayload])
-            }
-        )
+        # Add total row
+        feepayload.append({
+            "std": "Total",
+            "total": sum([i['total'] for i in feepayload]),
+            "paid": sum([i['paid'] for i in feepayload]),
+            "pending": sum([i['pending'] for i in feepayload]),
+            "waived": sum([i['waived'] for i in feepayload])
+        })
 
         finalResponse = {
             "message": "Fee Breakup Fetched",
             "data": feepayload
         }
-        print(feepayload)
         return JsonResponse(finalResponse, safe=False, status=200)

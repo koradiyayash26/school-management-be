@@ -8,9 +8,17 @@ class StandardSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class StandardMasterSerializer(serializers.ModelSerializer):
+    SCHOOL_TYPE_CHOICES = (
+        ('Primary', 'Primary'),
+        ('Secondary', 'Secondary'),
+        ('High Secondary', 'High Secondary'),
+    )
+    
+    school_type = serializers.ChoiceField(choices=SCHOOL_TYPE_CHOICES, default='Primary')
+    
     class Meta:
         model = standard_master
-        fields = ['id', 'name', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'school_type','is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']        
         
         

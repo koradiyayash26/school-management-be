@@ -6,6 +6,8 @@ from django.db.models import IntegerField
 
 from student.models import STATUS_CHOICES, Students,CATEGORY_CHOICE
 from student.serializers import StudentsSerializer
+from django.db.models import Count
+
 from .models import standard_master,AcademicYear
 from .serializers import StandardMasterSerializer,AcademicYearSerializer
 
@@ -23,12 +25,17 @@ class CasteReportAPI(APIView):
 
     def get(self, request):
         try:
+            # Get school_type from query parameters
+            school_type = request.GET.get('school_type')
             current_year = AcademicYear.objects.filter(is_current=True).first()
             
-            # Get all standards and sort them
-            standards = standard_master.objects.filter(
-                is_active=True
-            ).annotate(
+            # Get standards and filter by school_type if provided
+            standards_query = standard_master.objects.filter(is_active=True)
+            if school_type:
+                standards_query = standards_query.filter(school_type=school_type)
+            
+            # Sort standards
+            standards = standards_query.annotate(
                 name_as_int=Cast('name', IntegerField())
             ).order_by('name_as_int')
             
@@ -41,10 +48,13 @@ class CasteReportAPI(APIView):
                 'ઇ.ડબ્લ્યુ.એસ.': {'male': 0, 'female': 0, 'total': 0}
             }
             
+            standard_wise_totals = {}
+            
             # Process each standard
             for std in standards:
                 standard_data = {
                     'standard': std.name,
+                    'school_type': std.school_type,  # Add school_type to response
                     'categories': {
                         'જનરલ': {'male': 0, 'female': 0, 'total': 0},
                         'ઓ.બી.સી.': {'male': 0, 'female': 0, 'total': 0},
@@ -53,6 +63,16 @@ class CasteReportAPI(APIView):
                     },
                     'total': {'male': 0, 'female': 0, 'total': 0}
                 }
+                
+                # Initialize standard-wise totals for this school type
+                if std.school_type not in standard_wise_totals:
+                    standard_wise_totals[std.school_type] = {
+                        'જનરલ': {'male': 0, 'female': 0, 'total': 0},
+                        'ઓ.બી.સી.': {'male': 0, 'female': 0, 'total': 0},
+                        'એસસી/એસટી': {'male': 0, 'female': 0, 'total': 0},
+                        'ઇ.ડબ્લ્યુ.એસ.': {'male': 0, 'female': 0, 'total': 0},
+                        'total': {'male': 0, 'female': 0, 'total': 0}
+                    }
                 
                 # Get data for each category
                 for category, category_name in CATEGORY_CHOICE:
@@ -82,6 +102,14 @@ class CasteReportAPI(APIView):
                     overall_totals[category_name]['male'] += male_count
                     overall_totals[category_name]['female'] += female_count
                     overall_totals[category_name]['total'] += total_count
+                    
+                    # Update standard-wise totals
+                    standard_wise_totals[std.school_type][category_name]['male'] += male_count
+                    standard_wise_totals[std.school_type][category_name]['female'] += female_count
+                    standard_wise_totals[std.school_type][category_name]['total'] += total_count
+                    standard_wise_totals[std.school_type]['total']['male'] += male_count
+                    standard_wise_totals[std.school_type]['total']['female'] += female_count
+                    standard_wise_totals[std.school_type]['total']['total'] += total_count
                 
                 report_data.append(standard_data)
             
@@ -97,6 +125,7 @@ class CasteReportAPI(APIView):
                 'data': {
                     'report_data': report_data,
                     'overall_totals': overall_totals,
+                    'standard_wise_totals': standard_wise_totals,
                     'grand_total': grand_total
                 }
             }
@@ -161,6 +190,10 @@ class StandardsNo(APIView):
 
     def get(self, request):
         try:
+            # Get school_type from query parameters
+            school_type = request.GET.get('school_type')
+            
+            # Initialize standard counts with 13 first
             standard_counts = {
                 "13": {"boys_count": 0, "girls_count": 0},
                 "1": {"boys_count": 0, "girls_count": 0},
@@ -177,30 +210,67 @@ class StandardsNo(APIView):
                 "12": {"boys_count": 0, "girls_count": 0}
             }
 
-            students = Students.objects.filter(academic_year=AcademicYear.objects.filter(is_current=True).first())
+            # Start with base queryset
+            queryset = Students.objects.filter(
+                academic_year=AcademicYear.objects.filter(is_current=True).first()
+            )
 
+            # Filter by school_type if provided
+            if school_type:
+                valid_standards = standard_master.objects.filter(
+                    school_type=school_type,
+                    is_active=True
+                ).values_list('name', flat=True)
+                queryset = queryset.filter(standard__in=valid_standards)
+                
+                # Filter standard_counts to only include relevant standards
+                filtered_counts = {
+                    std: counts for std, counts in standard_counts.items()
+                    if std in valid_standards
+                }
+                standard_counts = filtered_counts
+
+            # Initialize counters
             boys_count = 0
             girls_count = 0
             total_count = 0
-            for student in students:
-                if student.gender == "કુમાર":
-                    boys_count += 1
-                else:
-                    girls_count += 1
-                standard_counts[student.standard]["boys_count"] += 1 if student.gender == "કુમાર" else 0
-                standard_counts[student.standard]["girls_count"] += 1 if student.gender == "કન્યા" else 0
-                total_count += 1
+
+            # Use annotate to get counts efficiently
+            student_counts = queryset.values('standard', 'gender').annotate(
+                count=Count('id')
+            )
+
+            # Process the counts
+            for count_data in student_counts:
+                standard = count_data['standard']
+                gender = count_data['gender']
+                count = count_data['count']
+
+                if standard in standard_counts:
+                    if gender == "કુમાર":
+                        standard_counts[standard]["boys_count"] = count
+                        boys_count += count
+                    elif gender == "કન્યા":
+                        standard_counts[standard]["girls_count"] = count
+                        girls_count += count
+                    total_count += count
 
             response_data = {
                 "message": "Standards Get Successfully",
                 "data": {
                     "standards": [
-                        {"standard": std, "boys_count": count["boys_count"], "girls_count": count["girls_count"]}
+                        {
+                            "standard": std,
+                            "boys_count": count["boys_count"],
+                            "girls_count": count["girls_count"],
+                            "total": count["boys_count"] + count["girls_count"]
+                        }
                         for std, count in standard_counts.items()
                     ],
                     "total_boys": boys_count,
                     "total_girls": girls_count,
-                    "total_students": total_count
+                    "total_students": total_count,
+                    "school_type": school_type if school_type else "All"
                 }
             }
 

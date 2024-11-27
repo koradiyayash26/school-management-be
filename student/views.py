@@ -38,7 +38,7 @@ from datetime import date
 
 from django.http import HttpResponse
 
-from standard.models import AcademicYear
+from standard.models import AcademicYear,standard_master
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -483,14 +483,26 @@ class ExportGeneralRegisterToExcel(APIView):
     
     def get(self, request):
         try:
+            # Get school_type from query parameters
+            school_type = request.GET.get('school_type')
+            
             current_academic_year = AcademicYear.objects.filter(is_current=True).first()
             if not current_academic_year:
                 return Response({"error": "No current academic year set"}, status=400)
             
-            # Use select_related to get academic year data efficiently
+            # Start with base queryset
             queryset = Students.objects.filter(
                 academic_year=current_academic_year
             ).select_related('academic_year')
+            
+            # Filter by school_type if provided
+            if school_type:
+                queryset = queryset.filter(
+                    standard__in=standard_master.objects.filter(
+                        school_type=school_type,
+                        is_active=True
+                    ).values_list('name', flat=True)
+                )
             
             # Modify the values query to include academic year
             data = list(queryset.values(
@@ -558,16 +570,23 @@ class ExportGeneralRegisterToExcel(APIView):
                         
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                sheet_name = f'General Register ({current_academic_year.year})'
+                if school_type:
+                    sheet_name = f'{school_type} {sheet_name}'
                 df.to_excel(
                     writer, 
                     index=False, 
-                    sheet_name=f'General Register ({current_academic_year.year})'
+                    sheet_name=sheet_name
                 )
 
+            filename = f'general_register_{current_academic_year.year}'
+            if school_type:
+                filename = f'{school_type.lower()}_{filename}'
+            
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-            response['Content-Disposition'] = f'attachment; filename=general_register_{current_academic_year.year}.xlsx'
+            response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
             response.write(output.getvalue())
 
             return response
@@ -608,9 +627,26 @@ class StudentGet(APIView):
     required_permission = 'can_view_students'
 
     def get(self, request):
-        # Get values list data
+        # Get query parameters
+        school_type = request.GET.get('school_type')
+        
+        # Get current academic year
         current_academic_year = AcademicYear.objects.filter(is_current=True).first()
-        students = Students.objects.filter(academic_year=current_academic_year).values(
+        
+        # Start with base queryset
+        queryset = Students.objects.filter(academic_year=current_academic_year)
+        
+        # If school_type is provided, filter students based on their standard's school_type
+        if school_type:
+            queryset = queryset.filter(
+                standard__in=standard_master.objects.filter(
+                    school_type=school_type,
+                    is_active=True
+                ).values_list('name', flat=True)
+            )
+
+        # Get values list data
+        students = queryset.values(
             'id',
             'grno',
             'last_name',
@@ -1052,14 +1088,30 @@ class HasExamPermission(BasePermission):
 # Examtemplate get api
 class ExamMarksTemplateAddGet(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated,HasExamPermission]
+    permission_classes = [IsAuthenticated, HasExamPermission]
     required_permission = 'can_view_exam_template'
     
     def get(self, request):
+        # Get school_type from query parameters
+        school_type = request.GET.get('school_type')
         
-        exam = ExamMarksTemplateAdd.objects.all()
-        serialized_data = ExamMarksTemplateAddSerializer(exam, many=True)
-        return JsonResponse({"message": "ExamTemplate list Get Successfully", "data": serialized_data.data}, status=200)
+        # Start with base queryset
+        queryset = ExamMarksTemplateAdd.objects.all()
+        
+        # Filter by school_type if provided
+        if school_type:
+            queryset = queryset.filter(
+                standard__in=standard_master.objects.filter(
+                    school_type=school_type,
+                    is_active=True
+                ).values_list('name', flat=True)
+            )
+        
+        serialized_data = ExamMarksTemplateAddSerializer(queryset, many=True)
+        return JsonResponse({
+            "message": "ExamTemplate list Get Successfully", 
+            "data": serialized_data.data
+        }, status=200)
 
 
 # Examtemplate patch api
