@@ -176,62 +176,6 @@ class StudentsStdMultiList(models.Model):
     def __str__(self):
         return str(self.first_name) + " " + str(self.last_name + " " + str(self.year))
     
-
-
-class StudentsUpdateList(models.Model):
-    id = models.AutoField(primary_key=True)
-    grno = models.IntegerField(unique=False)
-
-    student = models.ForeignKey(to=Students, on_delete=models.SET_NULL, null=True)
-    
-    middle_name = models.CharField(max_length=50, blank=False)
-    mother_name = models.CharField(max_length=60, null=True, blank=True, default="")
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICE)
-    
-    birth_date = models.DateField()
-    birth_place = models.CharField(max_length=100, null=True, blank=True, default="")
-    mobile_no = models.CharField(max_length=20, null=True, blank=True)
-    address = models.CharField(max_length=100, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True, blank=False)
-    district = models.CharField(max_length=50, null=True, blank=False)
-
-    standard = models.CharField(max_length=10, choices=STD_CHOICES)
-    section = models.CharField(max_length=2, choices=SECTION_CHOICES, null=True, blank=True)
-
-    last_school = models.CharField(max_length=100, null=True, blank=True, default="")
-    admission_std = models.CharField(max_length=10, choices=STD_CHOICES)
-    admission_date = models.CharField(max_length=50,choices=YEAR_CHOICES)
-    left_school_std = models.CharField(max_length=2, blank=True, null=True)
-    left_school_date = models.DateField(blank=True, null=True)
-
-    religion = models.CharField(max_length=50, choices=RELIGION_CHOICE)
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICE)
-    caste = models.CharField(max_length=50, null=True, blank=True, default="")
-
-    udise_no = models.CharField(max_length=50, blank=True, null=True, default="")
-    aadhar_no = models.CharField(max_length=50, blank=True, null=True, default="")
-
-    account_no = models.CharField(max_length=50, blank=True, null=True, default="")
-    name_on_passbook = models.CharField(max_length=100, blank=True, null=True, default="")
-    bank_name = models.CharField(max_length=50, blank=True, null=True, default="")
-    ifsc_code = models.CharField(max_length=50, blank=True, null=True, default="")
-    bank_address = models.CharField(max_length=100, blank=True, null=True, default="")
-
-    reason = models.CharField(default=r"અન્યત્રે જવાથી",max_length=100, null=True, blank=True)
-    note = models.CharField(max_length=100, blank=True, null=True, default="")
-
-    assesment = models.IntegerField(default=1)
-    progress = models.IntegerField(default=1)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="ચાલુ")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.student)
-
-  
-
-
     
 class StudentsUpdatesHistory(models.Model):
     name = models.CharField(max_length=50, blank=False,default='')
