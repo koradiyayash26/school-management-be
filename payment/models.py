@@ -91,9 +91,10 @@ class fee_type(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{str(self.fee_master)} - {str(self.standard)}"
+        return f"{str(self.fee_master)} - {str(self.standard)} - {str(self.year)}"
 
     class Meta:
+        unique_together = ['fee_master', 'standard', 'year']
         db_table = 'fee_type'
         ordering = ['-created_at']
         verbose_name = "Fee-Type"
