@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'payment'
 ]
 
-ASGI_APPLICATION = 'school.asgi.application'
+ASGI_APPLICATION = 'conf.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
