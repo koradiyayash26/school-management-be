@@ -87,6 +87,7 @@ YEAR_CHOICES = (
 class Students(models.Model):
     id = models.AutoField(primary_key=True)
     grno = models.IntegerField(unique=True)
+    student_img = models.ImageField(upload_to='images/',blank=True, null=True)
 
     last_name = models.CharField(max_length=50, blank=False)
     first_name = models.CharField(max_length=50, blank=False)

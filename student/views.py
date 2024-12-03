@@ -608,7 +608,15 @@ class StudentAdd(APIView):
     
     def post(self, request):
         try:
-            data = request.data
+            data = request.data.copy()
+            
+            # Handle the image field
+            if 'student_img' in request.FILES:
+                data['student_img'] = request.FILES['student_img']
+            elif 'student_img' in data:
+                if data['student_img'] == 'null' or data['student_img'] == '':
+                    data['student_img'] = None
+            
             serializer = StudentsSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
@@ -649,6 +657,7 @@ class StudentGet(APIView):
         students = queryset.values(
             'id',
             'grno',
+            'student_img',
             'last_name',
             'first_name',
             'middle_name',
@@ -748,6 +757,7 @@ class StudentGetId(APIView):
 
 
 # update api for student
+
 class StudentUpdate(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, HasStudentPermission]
@@ -756,7 +766,24 @@ class StudentUpdate(APIView):
     def patch(self, request, pk):
         try:
             student = Students.objects.get(pk=pk)
-            data = request.data
+            data = request.data.copy()
+            
+            # Handle the image field
+            if 'student_img' in request.FILES:
+                # New image uploaded - delete old image if exists
+                if student.student_img:
+                    student.student_img.delete(save=False)
+                data['student_img'] = request.FILES['student_img']
+            elif 'student_img' in data:
+                if data['student_img'] == 'null' or data['student_img'] == '':
+                    # User wants to remove the image
+                    if student.student_img:
+                        student.student_img.delete(save=False)
+                    data['student_img'] = None
+                else:
+                    # No new image uploaded - keep existing image
+                    data.pop('student_img')
+            
             serializer = StudentsSerializer(student, data=data, partial=True)
             if serializer.is_valid():
                 serializer.save()

@@ -1,5 +1,7 @@
 from django.urls import path, include
 from student import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 educational_urlpatterns = [
     path('search/', views.StudentUpdateHistoricalGet.as_view(), name='student_update_historical_get'),    
@@ -59,4 +61,4 @@ urlpatterns = [
     
     path('api/user/<int:user_id>/permissions/', views.UserPermissionsAPIView.as_view(), name='user-permissions'),
     path('api/user/<int:user_id>/assign-permissions/', views.AssignPermissionsToUserAPIView.as_view(), name='assign-permissions'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
