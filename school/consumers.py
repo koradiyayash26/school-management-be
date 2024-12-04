@@ -125,6 +125,46 @@ class ChatConsumer(WebsocketConsumer):
                     'is_delivered': True
                 }
             )
+            
+        elif message_type == 'delete_message':
+            message_id = data.get('message_id')
+            try:
+                # Get the message and check if the user is either the sender or the receiver
+                chat_message = ChatMessage.objects.get(id=message_id)
+                
+                if chat_message.sender == self.user or chat_message.receiver == self.user:
+                    receiver_id = chat_message.receiver_id
+                    
+                    # Delete the message
+                    chat_message.delete()
+                    
+                    # Prepare deletion notification
+                    deletion_data = {
+                        'type': 'delete_message',
+                        'message_id': message_id,
+                        'sender_id': chat_message.sender_id,
+                        'receiver_id': receiver_id
+                    }
+                    
+                    # Send to sender's room
+                    self.send(text_data=json.dumps(deletion_data))
+                    
+                    # Send to receiver's room
+                    async_to_sync(self.channel_layer.group_send)(
+                        f'chat_{receiver_id}',
+                        deletion_data
+                    )
+                else:
+                    self.send(text_data=json.dumps({
+                        'type': 'error',
+                        'message': 'You are not authorized to delete this message'
+                    }))
+                
+            except ChatMessage.DoesNotExist:
+                self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Message not found'
+                }))
                 
 
     def chat_message(self, event):
@@ -157,3 +197,10 @@ class ChatConsumer(WebsocketConsumer):
             'timestamp': msg.timestamp.isoformat(),
             'is_read': msg.is_read
         } for msg in messages]
+
+    def delete_message(self, event):
+        """
+        Handler for delete_message type events
+        """
+        # Forward the deletion event to the WebSocket
+        self.send(text_data=json.dumps(event))
