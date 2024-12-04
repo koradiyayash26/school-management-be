@@ -87,6 +87,45 @@ class ChatConsumer(WebsocketConsumer):
                 'type': 'chat_history',
                 'messages': messages
             }))
+        
+        elif message_type == 'edit_message':
+            message_id = data.get('message_id')
+            new_message = data.get('message')
+            
+            # Save message to database
+            chat_message = ChatMessage.objects.get(
+                sender=self.user,
+                id=message_id
+            )
+            chat_message.message = new_message
+            chat_message.save()
+            
+            # Extract receiver_id from the chat_message
+            receiver_id = chat_message.receiver_id
+            
+            # Send to sender's room
+            self.send(text_data=json.dumps({
+                'type': 'chat_message',
+                'message': new_message,
+                'sender_id': self.user.id,
+                'receiver_id': receiver_id,
+                'timestamp': chat_message.timestamp.isoformat(),
+                'is_delivered': True
+            }))
+            
+            # Send to receiver's room
+            async_to_sync(self.channel_layer.group_send)(
+                f'chat_{receiver_id}',
+                {
+                    'type': 'chat_message',
+                    'message': new_message,
+                    'sender_id': self.user.id,
+                    'receiver_id': receiver_id,
+                    'timestamp': chat_message.timestamp.isoformat(),
+                    'is_delivered': True
+                }
+            )
+                
 
     def chat_message(self, event):
         # Send message to WebSocket
