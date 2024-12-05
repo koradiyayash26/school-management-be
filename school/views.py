@@ -32,24 +32,36 @@ from django.db.models import Q
 from .models import ChatMessage
 from django.contrib.auth.models import User
 from .serializers import ChatMessageSerializer, UserSerializer
-
+from django.db.models import Max, Q
+from django.db.models.functions import Coalesce
 class ChatListView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get all active users except the current user
+        # Annotate each user with the timestamp of the last message exchanged with the current user
         chat_users = User.objects.filter(
             is_active=True
         ).exclude(
             id=request.user.id  # Exclude current user
-        ).distinct()
-        
+        ).annotate(
+            last_sent_time=Max(
+                'sent_messages__timestamp',
+                filter=Q(sent_messages__receiver=request.user, sent_messages__deleted_by_sender=False)
+            ),
+            last_received_time=Max(
+                'received_messages__timestamp',
+                filter=Q(received_messages__sender=request.user, received_messages__deleted_by_receiver=False)
+            )
+        ).annotate(
+            last_communication_time=Coalesce('last_sent_time', 'last_received_time')
+        ).order_by('-last_communication_time')  # Order by the last communication time descending
+
         chat_data = []
         for user in chat_users:
             last_message = ChatMessage.objects.filter(
                 (Q(sender=request.user, receiver=user, deleted_by_sender=False) |
-                Q(sender=user, receiver=request.user, deleted_by_receiver=False))
+                 Q(sender=user, receiver=request.user, deleted_by_receiver=False))
             ).last()
             
             chat_data.append({
