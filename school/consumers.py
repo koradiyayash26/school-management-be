@@ -128,38 +128,67 @@ class ChatConsumer(WebsocketConsumer):
             
         elif message_type == 'delete_message':
             message_id = data.get('message_id')
+            delete_type = data.get('deleteTypeMessage')
+
             try:
-                # Get the message and check if the user is either the sender or the receiver
                 chat_message = ChatMessage.objects.get(id=message_id)
-                
+                receiver_id = chat_message.receiver_id
+
                 if chat_message.sender == self.user or chat_message.receiver == self.user:
-                    receiver_id = chat_message.receiver_id
-                    
-                    # Delete the message
-                    chat_message.delete()
-                    
-                    # Prepare deletion notification
-                    deletion_data = {
-                        'type': 'delete_message',
-                        'message_id': message_id,
-                        'sender_id': chat_message.sender_id,
-                        'receiver_id': receiver_id
-                    }
-                    
-                    # Send to sender's room
-                    self.send(text_data=json.dumps(deletion_data))
-                    
-                    # Send to receiver's room
-                    async_to_sync(self.channel_layer.group_send)(
-                        f'chat_{receiver_id}',
-                        deletion_data
-                    )
+                    if delete_type == 'delete':
+                        # Individual delete - mark as deleted only for the current user
+                        if chat_message.sender == self.user:
+                            chat_message.deleted_by_sender = True
+                        else:
+                            chat_message.deleted_by_receiver = True
+                        chat_message.save()
+
+                        # Prepare deletion notification only for the current user
+                        deletion_data = {
+                            'type': 'delete',
+                            'message_id': message_id,
+                            'sender_id': chat_message.sender_id,
+                            'receiver_id': receiver_id,
+                            'delete_type': delete_type
+                        }
+                        self.send(text_data=json.dumps(deletion_data))
+
+                    elif delete_type == 'delete_all' and chat_message.sender == self.user:
+                        # Delete for all - only sender can do this
+                        chat_message.deleted_by_sender = True
+                        chat_message.deleted_by_receiver = True
+                        chat_message.save()
+
+                        # Prepare deletion notification for both users
+                        deletion_data = {
+                            'type': 'delete_message',
+                            'message_id': message_id,
+                            'sender_id': chat_message.sender_id,
+                            'receiver_id': receiver_id,
+                            'delete_type': delete_type
+                        }
+
+                        # Send to both sender and receiver
+                        self.send(text_data=json.dumps(deletion_data))
+                        async_to_sync(self.channel_layer.group_send)(
+                            f'chat_{receiver_id}',
+                            {
+                                'type': 'delete_message',
+                                **deletion_data
+                            }
+                        )
+
+                    else:
+                        self.send(text_data=json.dumps({
+                            'type': 'error',
+                            'message': 'Invalid delete type or not authorized to delete for all'
+                        }))
                 else:
                     self.send(text_data=json.dumps({
                         'type': 'error',
                         'message': 'You are not authorized to delete this message'
                     }))
-                
+
             except ChatMessage.DoesNotExist:
                 self.send(text_data=json.dumps({
                     'type': 'error',
@@ -199,8 +228,16 @@ class ChatConsumer(WebsocketConsumer):
                     'message': f'Failed to clear chat: {str(e)}'
                 }))    
 
+    def message_deleted(self, event):
+        """
+        Handler for message_deleted type events
+        """
+        self.send(text_data=json.dumps(event))
+
     def chat_message(self, event):
-        # Send message to WebSocket
+        """
+        Handler for chat_message type events
+        """
         self.send(text_data=json.dumps(event))
 
     def get_message_history(self, receiver_id):
