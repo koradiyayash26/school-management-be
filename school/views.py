@@ -48,8 +48,8 @@ class ChatListView(APIView):
         chat_data = []
         for user in chat_users:
             last_message = ChatMessage.objects.filter(
-                Q(sender=request.user, receiver=user) |
-                Q(sender=user, receiver=request.user)
+                (Q(sender=request.user, receiver=user, deleted_by_sender=False) |
+                Q(sender=user, receiver=request.user, deleted_by_receiver=False))
             ).last()
             
             chat_data.append({
@@ -70,8 +70,12 @@ class ChatMessageView(APIView):
 
     def get(self, request, user_id):
         messages = ChatMessage.objects.filter(
-            Q(sender=request.user, receiver_id=user_id) |
-            Q(sender_id=user_id, receiver=request.user)
+            # Get messages where current user is sender and hasn't deleted them
+            (Q(sender=request.user, receiver_id=user_id, deleted_by_sender=False) |
+            # Or where current user is receiver and hasn't deleted them
+            Q(sender_id=user_id, receiver=request.user, deleted_by_receiver=False))
+            # Exclude messages deleted by both users
+            & ~Q(deleted_by_sender=True, deleted_by_receiver=True)
         )
         serializer = ChatMessageSerializer(messages, many=True)
         return Response(serializer.data)

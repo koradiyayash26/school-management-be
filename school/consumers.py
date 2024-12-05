@@ -166,6 +166,38 @@ class ChatConsumer(WebsocketConsumer):
                     'message': 'Message not found'
                 }))
                 
+        elif message_type == 'clear_chat':
+            receiver_id = data.get('receiver_id')
+            
+            try:
+                # Update messages where user is sender
+                ChatMessage.objects.filter(
+                    sender=self.user,
+                    receiver_id=receiver_id
+                ).update(deleted_by_sender=True)
+                
+                # Update messages where user is receiver
+                ChatMessage.objects.filter(
+                    sender_id=receiver_id,
+                    receiver=self.user
+                ).update(deleted_by_receiver=True)
+                
+                # Prepare clear chat notification
+                clear_data = {
+                    'type': 'chat_cleared',
+                    'sender_id': self.user.id,
+                    'receiver_id': receiver_id,
+                    'last_message': None
+                }
+                
+                # Send confirmation to sender
+                self.send(text_data=json.dumps(clear_data))
+                
+            except Exception as e:
+                self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Failed to clear chat: {str(e)}'
+                }))    
 
     def chat_message(self, event):
         # Send message to WebSocket
