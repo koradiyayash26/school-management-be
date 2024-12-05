@@ -98,6 +98,7 @@ class ChatConsumer(WebsocketConsumer):
                 id=message_id
             )
             chat_message.message = new_message
+            chat_message.is_edited = True
             chat_message.save()
             
             # Extract receiver_id from the chat_message
@@ -109,6 +110,7 @@ class ChatConsumer(WebsocketConsumer):
                 'message': new_message,
                 'sender_id': self.user.id,
                 'receiver_id': receiver_id,
+                'is_edited':chat_message.is_edited,
                 'timestamp': chat_message.timestamp.isoformat(),
                 'is_delivered': True
             }))

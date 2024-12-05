@@ -12,6 +12,7 @@ class ChatMessage(models.Model):
     is_read = models.BooleanField(default=False)
     deleted_by_sender = models.BooleanField(default=False)
     deleted_by_receiver = models.BooleanField(default=False)
+    is_edited = models.BooleanField(default=False)
 
 
     class Meta:
