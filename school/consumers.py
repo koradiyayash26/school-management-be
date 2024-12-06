@@ -197,6 +197,54 @@ class ChatConsumer(WebsocketConsumer):
                     'message': 'Message not found'
                 }))
                 
+        
+        elif message_type == 'delete_bulk_messages':
+            message_ids = data.get('message_ids', [])
+            
+            try:
+                # Get all messages that the user is authorized to delete
+                messages = ChatMessage.objects.filter(
+                    id__in=message_ids
+                ).filter(
+                    Q(sender=self.user) | Q(receiver=self.user)
+                )
+                
+                deleted_message_ids = []
+                for message in messages:
+                    # Mark messages as deleted for the current user
+                    if message.sender == self.user:
+                        message.deleted_by_sender = True
+                    else:
+                        message.deleted_by_receiver = True
+                    message.save()
+                    deleted_message_ids.append(message.id)
+                    
+                    # Prepare deletion notification
+                    deletion_data = {
+                        'type': 'message_deleted',
+                        'message_id': message.id,
+                        'sender_id': message.sender_id,
+                        'receiver_id': message.receiver_id,
+                        'delete_type': 'delete'
+                    }
+                    
+                    # Send notification to current user
+                    self.send(text_data=json.dumps(deletion_data))
+                
+                # Send confirmation of bulk deletion
+                self.send(text_data=json.dumps({
+                    'type': 'bulk_delete_confirmation',
+                    'message_ids': deleted_message_ids,
+                    'status': 'success'
+                }))
+                
+            except Exception as e:
+                self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Failed to delete messages: {str(e)}'
+                }))
+                
+                
         elif message_type == 'clear_chat':
             receiver_id = data.get('receiver_id')
             
