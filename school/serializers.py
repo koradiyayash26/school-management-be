@@ -3,6 +3,8 @@ from student.models import SchoolStudent,Students
 
 from .models import ChatMessage
 from django.contrib.auth import get_user_model
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 class ReportsSerializer(serializers.Serializer):
     student_id = serializers.IntegerField()
@@ -49,7 +51,32 @@ class UserSerializer(serializers.ModelSerializer):
 class ChatMessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
     receiver = UserSerializer(read_only=True)
-
+    formatted_date = serializers.SerializerMethodField()
+    
     class Meta:
         model = ChatMessage
-        fields = ['id', 'sender', 'receiver', 'message', 'timestamp','is_edited', 'is_read','deleted_by_sender','deleted_by_receiver']
+        fields = ['id', 'sender', 'receiver', 'message', 'timestamp', 
+                 'is_edited', 'is_read', 'deleted_by_sender', 
+                 'deleted_by_receiver', 'formatted_date']
+
+    def get_formatted_date(self, obj):
+        """
+        Returns a formatted date string based on the message timestamp:
+        - "Today" for today's messages
+        - "Yesterday" for yesterday's messages
+        - "dd-mm-yyyy" for older messages
+        """
+        now = timezone.now()
+        message_date = obj.timestamp.astimezone(now.tzinfo)
+        
+        # Strip time to compare just the dates
+        today = now.date()
+        msg_date = message_date.date()
+        yesterday = today - timedelta(days=1)
+        
+        if msg_date == today:
+            return 'Today'
+        elif msg_date == yesterday:
+            return 'Yesterday'
+        else:
+            return message_date.strftime('%d-%m-%Y')
