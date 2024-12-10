@@ -16,12 +16,15 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from rest_framework.permissions import BasePermission
 
-
+class HasStandardReportPermission(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perm(f'standard.{view.required_permission}')
+    
 
 class CasteReportAPI(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    required_permission = 'can_view_category_report'
+    permission_classes = [IsAuthenticated,HasStandardReportPermission]
+    required_permission = 'can_view_standards_count'
 
     def get(self, request):
         try:
@@ -159,10 +162,7 @@ class CountStudents(APIView):
         return JsonResponse(finalResponse, safe=False, status=200)
 
 # permission for standard report for Group
-class HasStandardReportPermission(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.has_perm(f'standard.{view.required_permission}')
-    
+
     
 # api for perticuler standard student data
 class StandardsGetData(APIView):

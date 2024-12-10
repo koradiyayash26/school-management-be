@@ -13,15 +13,42 @@ class Command(BaseCommand):
     help = 'Creates StudentPermission, ExamPermission, StudentUpdateYearStd, StudentUpdateHistory, and FeeTypesPermission groups and assigns permissions'
 
     def handle(self, *args, **options):
+        self.create_certificate_permission_group()
         self.create_student_permission_group()
         self.create_exam_permission_group()
-        self.create_student_update_and_history_group()
-        self.create_fee_types_permission_group()
-        self.create_school_student_permission_group()
+        # self.create_student_update_and_history_group()
+        # self.create_fee_types_permission_group()
+        # self.create_school_student_permission_group()
         self.create_payments_permission_group()
         self.create_standard_report_permission_group()
         self.create_fee_report_permission_group()
-        
+    
+    
+    def create_certificate_permission_group(self):
+        group, created = Group.objects.get_or_create(name='Certificate')
+
+        # Define custom permissions for Certificate group
+        custom_permissions = [
+            ('can_view_students', 'Can view students'),
+            ('can_view_student_details', 'Can view student details'),
+        ]
+
+        content_type = ContentType.objects.get_for_model(Students)
+
+        for codename, name in custom_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
+                content_type=content_type,
+            )
+            group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
+
+        self.stdout.write(self.style.SUCCESS('Successfully set up Certificate group and custom permissions'))
+            
 
     def create_student_permission_group(self):
         group, created = Group.objects.get_or_create(name='General Register')
@@ -79,11 +106,43 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('Successfully set up ExamPermission group and custom permissions'))
 
-    def create_fee_types_permission_group(self):
-        group, created = Group.objects.get_or_create(name='Fee Types')
+    # def create_fee_types_permission_group(self):
+    #     group, created = Group.objects.get_or_create(name='Fee Types')
 
-        # Define custom permissions based on URL patterns
-        custom_permissions = [
+    #     # Define custom permissions based on URL patterns
+    #     custom_permissions = [
+    #         ('can_add_fee_type', 'Can add fee type'),
+    #         ('can_view_fee_types', 'Can view fee types'),
+    #         ('can_view_fee_type_details', 'Can view fee type details'),
+    #         ('can_edit_fee_type', 'Can edit fee type'),
+    #         ('can_delete_fee_type', 'Can delete fee type'),
+    #         ('can_view_fee_type_add_details', 'Can view fee type add details'),
+    #         ('can_assign_student_fee', 'Can assign student fee'),
+    #         ('can_update_student_fee_types', 'Can update student fee types'),  # New permission
+    #     ]
+
+    #     content_type = ContentType.objects.get_for_model(fee_type)
+
+    #     for codename, name in custom_permissions:
+    #         permission, created = Permission.objects.get_or_create(
+    #             codename=codename,
+    #             name=name,
+    #             content_type=content_type,
+    #         )
+    #         group.permissions.add(permission)
+    #         if created:
+    #             self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+    #         else:
+    #             self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
+
+    #     self.stdout.write(self.style.SUCCESS('Successfully set up FeeTypesPermission group and custom permissions'))
+    
+    
+    def create_payments_permission_group(self):
+        group, created = Group.objects.get_or_create(name='Payment Fees')
+
+        # Combined permissions from both Fee Types and Payments
+        fee_type_permissions = [
             ('can_add_fee_type', 'Can add fee type'),
             ('can_view_fee_types', 'Can view fee types'),
             ('can_view_fee_type_details', 'Can view fee type details'),
@@ -91,96 +150,10 @@ class Command(BaseCommand):
             ('can_delete_fee_type', 'Can delete fee type'),
             ('can_view_fee_type_add_details', 'Can view fee type add details'),
             ('can_assign_student_fee', 'Can assign student fee'),
-            ('can_update_student_fee_types', 'Can update student fee types'),  # New permission
+            ('can_update_student_fee_types', 'Can update student fee types'),
         ]
 
-        content_type = ContentType.objects.get_for_model(fee_type)
-
-        for codename, name in custom_permissions:
-            permission, created = Permission.objects.get_or_create(
-                codename=codename,
-                name=name,
-                content_type=content_type,
-            )
-            group.permissions.add(permission)
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
-            else:
-                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
-
-        self.stdout.write(self.style.SUCCESS('Successfully set up FeeTypesPermission group and custom permissions'))
-    
-    
-    
-    def create_school_student_permission_group(self):
-        group, created = Group.objects.get_or_create(name='Student Fees')
-
-        # Define custom permissions based on URL patterns
-        custom_permissions = [
-            ('can_view_school_students', 'Can view school students'),
-            ('can_view_school_student_details', 'Can view school student details'),
-            ('can_view_school_student_names', 'Can view school student names'),
-            ('can_add_school_student', 'Can add school student'),
-            ('can_edit_school_student', 'Can edit school student'),
-        ]
-
-        content_type = ContentType.objects.get_for_model(SchoolStudent)
-
-        for codename, name in custom_permissions:
-            permission, created = Permission.objects.get_or_create(
-                codename=codename,
-                name=name,
-                content_type=content_type,
-            )
-            group.permissions.add(permission)
-            if created:
-                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
-            else:
-                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
-        self.stdout.write(self.style.SUCCESS('Successfully set up SchoolStudentPermission group and custom permissions'))
-                
-    def create_student_update_and_history_group(self):
-        group, created = Group.objects.get_or_create(name='Student Update and History')
-
-        # Combined permissions for both update and history
-        custom_permissions = {
-            UpdateStudent: [
-                ('can_view_student_update', 'Can view student update'),
-                ('can_add_student_update', 'Can add student update'),
-                ('can_select_students', 'Can select students'),
-                ('can_unselect_students', 'Can unselect students'),
-                ('can_view_selected_unselected_students', 'Can view selected and unselected students'),
-                ('can_add_year_std_multilist', 'Can add year and standard to multilist'),
-            ],
-            StudentsUpdatesHistory: [
-                ('can_view_student_update_history', 'Can view student update history'),
-                ('can_delete_student_update_history', 'Can delete student update history'),
-            ]
-        }
-
-        # Create permissions for both models
-        for model, permissions in custom_permissions.items():
-            content_type = ContentType.objects.get_for_model(model)
-            for codename, name in permissions:
-                permission, created = Permission.objects.get_or_create(
-                    codename=codename,
-                    name=name,
-                    content_type=content_type,
-                )
-                group.permissions.add(permission)
-                if created:
-                    self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
-                else:
-                    self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
-
-        self.stdout.write(self.style.SUCCESS('Successfully set up Student Update and History group with combined permissions'))      
-   
-    
-    def create_payments_permission_group(self):
-        group, created = Group.objects.get_or_create(name='Payment')
-
-        # Define custom permissions based on URL patterns
-        custom_permissions = [
+        payment_permissions = [
             ('can_view_payment_list', 'Can view payment list'),
             ('can_view_receipt_details', 'Can view receipt details'),
             ('can_view_payment_details', 'Can view payment details'),
@@ -190,11 +163,25 @@ class Command(BaseCommand):
             ('can_view_students', 'Can view students'),
         ]
 
-        models = [Receipt, ReceiptDetail, student_fees, Students]
+        # Create fee type permissions
+        content_type = ContentType.objects.get_for_model(fee_type)
+        for codename, name in fee_type_permissions:
+            permission, created = Permission.objects.get_or_create(
+                codename=codename,
+                name=name,
+                content_type=content_type,
+            )
+            group.permissions.add(permission)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+            else:
+                self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
 
+        # Create payment permissions for multiple models
+        models = [Receipt, ReceiptDetail, student_fees, Students]
         for model in models:
             content_type = ContentType.objects.get_for_model(model)
-            for codename, name in custom_permissions:
+            for codename, name in payment_permissions:
                 permission, created = Permission.objects.get_or_create(
                     codename=codename,
                     name=name,
@@ -206,11 +193,108 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
 
-        self.stdout.write(self.style.SUCCESS('Successfully set up PaymentsPermission group and custom permissions'))
+        self.stdout.write(self.style.SUCCESS('Successfully set up Payment Fees group and custom permissions'))
+    
+    
+    # def create_school_student_permission_group(self):
+    #     group, created = Group.objects.get_or_create(name='Student Fees')
+
+    #     # Define custom permissions based on URL patterns
+    #     custom_permissions = [
+    #         ('can_view_school_students', 'Can view school students'),
+    #         ('can_view_school_student_details', 'Can view school student details'),
+    #         ('can_view_school_student_names', 'Can view school student names'),
+    #         ('can_add_school_student', 'Can add school student'),
+    #         ('can_edit_school_student', 'Can edit school student'),
+    #     ]
+
+    #     content_type = ContentType.objects.get_for_model(SchoolStudent)
+
+    #     for codename, name in custom_permissions:
+    #         permission, created = Permission.objects.get_or_create(
+    #             codename=codename,
+    #             name=name,
+    #             content_type=content_type,
+    #         )
+    #         group.permissions.add(permission)
+    #         if created:
+    #             self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+    #         else:
+    #             self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
+    #     self.stdout.write(self.style.SUCCESS('Successfully set up SchoolStudentPermission group and custom permissions'))
+                
+    # def create_student_update_and_history_group(self):
+    #     group, created = Group.objects.get_or_create(name='Student Update and History')
+
+    #     # Combined permissions for both update and history
+    #     custom_permissions = {
+    #         UpdateStudent: [
+    #             ('can_view_student_update', 'Can view student update'),
+    #             ('can_add_student_update', 'Can add student update'),
+    #             ('can_select_students', 'Can select students'),
+    #             ('can_unselect_students', 'Can unselect students'),
+    #             ('can_view_selected_unselected_students', 'Can view selected and unselected students'),
+    #             ('can_add_year_std_multilist', 'Can add year and standard to multilist'),
+    #         ],
+    #         StudentsUpdatesHistory: [
+    #             ('can_view_student_update_history', 'Can view student update history'),
+    #             ('can_delete_student_update_history', 'Can delete student update history'),
+    #         ]
+    #     }
+
+    #     # Create permissions for both models
+    #     for model, permissions in custom_permissions.items():
+    #         content_type = ContentType.objects.get_for_model(model)
+    #         for codename, name in permissions:
+    #             permission, created = Permission.objects.get_or_create(
+    #                 codename=codename,
+    #                 name=name,
+    #                 content_type=content_type,
+    #             )
+    #             group.permissions.add(permission)
+    #             if created:
+    #                 self.stdout.write(self.style.SUCCESS(f'Created permission: {name}'))
+    #             else:
+    #                 self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name}'))
+
+    #     self.stdout.write(self.style.SUCCESS('Successfully set up Student Update and History group with combined permissions'))      
+   
+    
+    # def create_payments_permission_group(self):
+    #     group, created = Group.objects.get_or_create(name='Payment')
+
+    #     # Define custom permissions based on URL patterns
+    #     custom_permissions = [
+    #         ('can_view_payment_list', 'Can view payment list'),
+    #         ('can_view_receipt_details', 'Can view receipt details'),
+    #         ('can_view_payment_details', 'Can view payment details'),
+    #         ('can_delete_payment', 'Can delete payment'),
+    #         ('can_view_student_fees', 'Can view student fees'),
+    #         ('can_collect_payment', 'Can collect payment'),
+    #         ('can_view_students', 'Can view students'),
+    #     ]
+
+    #     models = [Receipt, ReceiptDetail, student_fees, Students]
+
+    #     for model in models:
+    #         content_type = ContentType.objects.get_for_model(model)
+    #         for codename, name in custom_permissions:
+    #             permission, created = Permission.objects.get_or_create(
+    #                 codename=codename,
+    #                 name=name,
+    #                 content_type=content_type,
+    #             )
+    #             group.permissions.add(permission)
+    #             if created:
+    #                 self.stdout.write(self.style.SUCCESS(f'Created permission: {name} for {model.__name__}'))
+    #             else:
+    #                 self.stdout.write(self.style.SUCCESS(f'Added existing permission: {name} for {model.__name__}'))
+
+    #     self.stdout.write(self.style.SUCCESS('Successfully set up PaymentsPermission group and custom permissions'))
         
     
     def create_standard_report_permission_group(self):
-        group, created = Group.objects.get_or_create(name='Standard Report')
+        group, created = Group.objects.get_or_create(name='Standard And Caste Report')
 
         # Define custom permissions for StandardReport
         custom_permissions = [
