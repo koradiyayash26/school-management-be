@@ -1,5 +1,6 @@
 from django.db import models
-from standard.models import AcademicYear
+from standard.models import AcademicYear,standard_master
+
 STD_CHOICES = (
     ("1", "1"),
     ("2", "2"),
@@ -14,6 +15,7 @@ STD_CHOICES = (
     ("11", "11"),
     ("12", "12"),
     ("13", "13"),
+    ("Graduate", "Graduate"),
 )
 
 
@@ -220,3 +222,15 @@ class ExamMarkAssingData(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.subject} - Mark: {self.mark}"    
+    
+    
+    
+class StudentUpdateStdAcademicHistory(models.Model):
+    student = models.ForeignKey(Students, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    standard = models.ForeignKey(standard_master, on_delete=models.CASCADE)
+    note = models.TextField(blank=True)
+    update_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.first_name} - {self.student.last_name} - {self.academic_year.year} - {self.standard.name}"   

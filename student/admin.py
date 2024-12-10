@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdatesHistory,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData
+from .models import Students,SchoolStudent,UpdateStudent,StudentsUpdatesHistory,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData,StudentUpdateStdAcademicHistory
 
 # Register your models here.
 
@@ -10,3 +10,4 @@ admin.site.register(StudentsStdMultiList)
 admin.site.register(StudentsUpdatesHistory)
 admin.site.register(ExamMarksTemplateAdd)
 admin.site.register(ExamMarkAssingData)
+admin.site.register(StudentUpdateStdAcademicHistory)

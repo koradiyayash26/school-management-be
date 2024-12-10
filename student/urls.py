@@ -23,7 +23,9 @@ student_update_urlpatterns = [
     path('seleted/', views.StudentsSelectedPost.as_view(), name='student_update_seleted'),    
     path('unseleted/', views.StudentsUnselectedPost.as_view(), name='student_update_unseleted'),    
     path('students/<int:year>/<int:standard>/', views.StudentSletedOrNotSeletedGet.as_view(), name='student_seletedAndUnseleted_get'),    
-    path('add-multilist/', views.StudentsAddYearAndstdFromurl.as_view(), name='student_update_add_updatemultilist_get'),    
+    path('add-multilist/', views.StudentsAddYearAndstdFromurl.as_view(), name='student_update_add_updatemultilist_get'),   
+    # hit api  
+    path('bulk/', views.StudentStandardUpdateAPIView.as_view(), name='student_update_bulk'),    
 ]
 
 exam_teamplate_urlpatterns = [

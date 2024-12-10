@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated,BasePermission
 
-from .models import Students,UpdateStudent,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData
+from .models import Students,UpdateStudent,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData,StudentUpdateStdAcademicHistory
 from .serializers import StudentsSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -614,8 +614,12 @@ class StudentAdd(APIView):
             if 'student_img' in request.FILES:
                 data['student_img'] = request.FILES['student_img']
             elif 'student_img' in data:
-                if data['student_img'] == 'null' or data['student_img'] == '':
+                # Check for various "empty" values
+                if data['student_img'] in ['null', 'undefined', '', None]:
                     data['student_img'] = None
+            else:
+                # If student_img is not in request at all, set it to None
+                data['student_img'] = None
             
             serializer = StudentsSerializer(data=data)
             if serializer.is_valid():
@@ -1353,3 +1357,176 @@ class ExamAssingUpdateMarkAPIView(APIView):
         ]
 
         return JsonResponse({'data': data}, status=status.HTTP_200_OK)
+    
+
+
+class StudentStandardUpdateAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated,IsAdminUser]
+
+    def post(self, request):
+        try:
+            # Check for current academic year
+            current_academic_years = AcademicYear.objects.filter(is_current=True)
+            if not current_academic_years.exists():
+                return JsonResponse({
+                    "error": "No current academic year set",
+                    "message": "Please set a current academic year first"
+                }, status=400)
+            elif current_academic_years.count() > 1:
+                return JsonResponse({
+                    "error": "Multiple current academic years found",
+                    "message": "Please ensure only one academic year is set as current",
+                    "current_years": list(current_academic_years.values_list('year', flat=True))
+                }, status=400)
+
+            current_academic_year = current_academic_years.first()
+
+            # Parse current year and calculate next year
+            current_year_start = int(current_academic_year.year.split('-')[0])
+            current_year_end = int(current_academic_year.year.split('-')[1])
+            next_year = f"{current_year_start + 1}-{current_year_end + 1}"
+
+            # Check if next academic year exists
+            next_academic_year = AcademicYear.objects.filter(year=next_year).first()
+            if not next_academic_year:
+                return JsonResponse({
+                    "error": "Next academic year not found",
+                    "message": f"Please create academic year {next_year} first"
+                }, status=400)
+
+            # Get students to update
+            students = Students.objects.filter(
+                academic_year=current_academic_year,
+                status="ચાલુ"  # Only active students
+            ).exclude(standard="Graduate")  # Exclude already graduated students
+
+            # Initialize counters
+            update_counts = {}
+            updated_students = []
+            not_updated_students = []
+            graduated_students = []
+
+            with transaction.atomic():
+                for student in students:
+                    try:
+                        current_std = student.standard
+                        
+                        # Handle special cases
+                        if current_std == "13":
+                            # Student in 13th goes to 1st standard
+                            new_std = "1"
+                            note = f"Promoted from standard 13 to standard 1"
+                        elif current_std == "12":
+                            # Student in 12th graduates
+                            new_std = "Graduate"
+                            note = "Graduated from standard 12"
+                            graduated_students.append({
+                                'id': student.id,
+                                'name': f"{student.first_name} {student.last_name}",
+                                'old_standard': current_std,
+                                'new_standard': new_std,
+                                'grno': student.grno
+                            })
+                        else:
+                            # Normal promotion
+                            new_std = str(int(current_std) + 1)
+                            note = f"Promoted from standard {current_std} to {new_std}"
+
+                        # Create history record
+                        try:
+                            # Get standard master object, handle both string and integer cases
+                            standard_obj = standard_master.objects.get(name=str(current_std))
+                            
+                            StudentUpdateStdAcademicHistory.objects.create(
+                                student=student,
+                                academic_year=current_academic_year,
+                                standard=standard_obj,
+                                note=note
+                            )
+                        except standard_master.DoesNotExist:
+                            # Log error but don't stop the promotion process
+                            not_updated_students.append({
+                                'id': student.id,
+                                'name': f"{student.first_name} {student.last_name}",
+                                'standard': current_std,
+                                'grno': student.grno,
+                                'error': f"Standard {current_std} not found in standard_master"
+                            })
+                            continue
+                        except Exception as e:
+                            # Log any other errors but don't stop the promotion process
+                            not_updated_students.append({
+                                'id': student.id,
+                                'name': f"{student.first_name} {student.last_name}",
+                                'standard': current_std,
+                                'grno': student.grno,
+                                'error': f"Error creating history record: {str(e)}"
+                            })
+                            continue
+
+                        # Update student record
+                        student.standard = new_std
+                        if new_std != "Graduate":  # Only update academic year if not graduating
+                            student.academic_year = next_academic_year
+                        student.save()
+
+                        # Update counters
+                        if current_std not in update_counts:
+                            update_counts[current_std] = {
+                                'total': 0,
+                                'updated': 0,
+                                'graduated': 0
+                            }
+                        update_counts[current_std]['total'] += 1
+                        
+                        if new_std == "Graduate":
+                            update_counts[current_std]['graduated'] += 1
+                        else:
+                            update_counts[current_std]['updated'] += 1
+
+                        if new_std != "Graduate":
+                            updated_students.append({
+                                'id': student.id,
+                                'name': f"{student.first_name} {student.last_name}",
+                                'old_standard': current_std,
+                                'new_standard': new_std,
+                                'grno': student.grno
+                            })
+
+                    except Exception as e:
+                        not_updated_students.append({
+                            'id': student.id,
+                            'name': f"{student.first_name} {student.last_name}",
+                            'standard': student.standard,
+                            'grno': student.grno,
+                            'error': str(e)
+                        })
+
+            # Prepare response data
+            response_data = {
+                'message': 'Student standards updated successfully',
+                'academic_year_update': {
+                    'from': current_academic_year.year,
+                    'to': next_year
+                },
+                'update_summary': {
+                    'total_students': len(students),
+                    'updated_count': len(updated_students),
+                    'graduated_count': len(graduated_students),
+                    'failed_count': len(not_updated_students),
+                    'standard_wise_counts': update_counts
+                },
+                'updated_students': updated_students,
+                'graduated_students': graduated_students,
+                'failed_updates': not_updated_students
+            }
+
+            return JsonResponse(response_data, status=200)
+
+        except Exception as e:
+            return JsonResponse({
+                'error': 'Failed to update student standards',
+                'message': str(e)
+            }, status=500)
+    
