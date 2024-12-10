@@ -229,6 +229,7 @@ class StudentUpdateStdAcademicHistory(models.Model):
     student = models.ForeignKey(Students, on_delete=models.CASCADE)
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     standard = models.ForeignKey(standard_master, on_delete=models.CASCADE)
+    section = models.CharField(max_length=50, blank=True, null=True)
     note = models.TextField(blank=True)
     update_date = models.DateTimeField(auto_now=True)
 

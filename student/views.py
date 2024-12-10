@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated,BasePermission
 
 from .models import Students,UpdateStudent,StudentsStdMultiList,StudentsUpdatesHistory,ExamMarksTemplateAdd,ExamMarkAssingData,StudentUpdateStdAcademicHistory
-from .serializers import StudentsSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer
+from .serializers import StudentsSerializer,StudentUpdateHistoricalSerializer,StudentUpdateStdYearSerializer,StudentUpdatedSerializer,ExamMarksTemplateAddSerializer,ExamMarksAssignSerializer,ExamMarkAssingDataSerializer,StudentUpdateHistorySerializer
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -817,6 +817,44 @@ class StudentDelete(APIView):
             return JsonResponse({"message": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return JsonResponse({"message": "An error occurred", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+
+
+class StudentUpdateHistoryStdAcademicYear(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, HasStudentPermission]
+    required_permission = 'can_view_student_details'
+
+    def get(self, request, pk):
+        try:
+            # First check if student exists
+            student = Students.objects.get(id=pk)
+            
+            # Get all academic history records for this student
+            academic_history = StudentUpdateStdAcademicHistory.objects.filter(
+                student_id=pk
+            ).order_by('-id')
+            
+            # Serialize the history records
+            serialized_data = StudentUpdateHistorySerializer(academic_history, many=True)
+            
+            return JsonResponse({
+                "message": "Student update academic history retrieved successfully", 
+                "student_name": f"{student.first_name} {student.last_name}",
+                "data": serialized_data.data
+            }, status=200)
+            
+        except Students.DoesNotExist:
+            return JsonResponse({
+                "message": "Student not found"
+            }, status=404)
+            
+        except Exception as e:
+            return JsonResponse({
+                "message": "An error occurred", 
+                "error": str(e)
+            }, status=500)
+
+
             
             
 # permission for student update year and std for group
@@ -1442,7 +1480,8 @@ class StudentStandardUpdateAPIView(APIView):
                                 student=student,
                                 academic_year=current_academic_year,
                                 standard=standard_obj,
-                                note=note
+                                note=note,
+                                section=student.section
                             )
                         except standard_master.DoesNotExist:
                             # Log error but don't stop the promotion process

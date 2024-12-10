@@ -14,6 +14,7 @@ student_urlpatterns = [
     path('<int:pk>/search/', views.StudentGetId.as_view(), name='search_student'),
     path('<int:pk>/edit/', views.StudentUpdate.as_view(), name='edit_student'),    
     path('<int:pk>/delete/', views.StudentDelete.as_view(), name='delete_student'),
+    path('<int:pk>/academic-year-history/', views.StudentUpdateHistoryStdAcademicYear.as_view(), name='student_update_history_std_academic_year'),
 ]
 
 # student update std and year api 

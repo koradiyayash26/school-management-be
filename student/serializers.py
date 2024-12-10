@@ -1,4 +1,4 @@
-from .models import Students,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData
+from .models import Students,StudentsUpdatesHistory,UpdateStudent,StudentsStdMultiList,ExamMarksTemplateAdd,ExamMarkAssingData,StudentUpdateStdAcademicHistory
 from rest_framework import serializers
 
 
@@ -65,3 +65,15 @@ class ExamMarkAssingDataSerializer(serializers.ModelSerializer):
 
     def get_last_name(self, obj):
         return obj.student.last_name if obj.student else None
+
+class StudentUpdateHistorySerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    academic_year = serializers.CharField(source='academic_year.year')
+    standard = serializers.CharField(source='standard.name')
+
+    class Meta:
+        model = StudentUpdateStdAcademicHistory
+        fields = ['id', 'student_name', 'academic_year','section', 'standard', 'note', 'update_date']
+
+    def get_student_name(self, obj):
+        return f"{obj.student.first_name} {obj.student.last_name}"    

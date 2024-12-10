@@ -144,7 +144,7 @@ class FeeTypeGetAddDetails(APIView):
     required_permission = 'can_view_fee_type_add_details'
     def get(self, request):
         fee_master = fee_type_master.objects.all()
-        standard = standard_master.objects.all()
+        standard = standard_master.objects.filter(is_active=True)
         serialized_fee_master_data = FeeTypeMasterSerializer(fee_master, many=True)
         serialized_standard_data = StandardSerializer(standard, many=True)
         combined_data = {
