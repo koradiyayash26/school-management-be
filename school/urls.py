@@ -39,4 +39,9 @@ urlpatterns = [
     path('school-student/', include(schoolStudent_urlpatterns)),
     path('chats/', include(chats_urlpatterns)),
     path('ws/', include(websocket_urlpatterns)),  # Add this line
+    
+    path('permission-request/', views.PermissionRequestView.as_view(), name='permission-request'),
+    path('permission-request/approve/<str:request_id>/', views.ApprovePermissionView.as_view(), name='approve-permission'),
+    path('permission-request/decline/<str:request_id>/', views.DeclinePermissionView.as_view(), name='decline-permission'),
 ]
+

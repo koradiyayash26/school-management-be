@@ -243,3 +243,13 @@ if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Email Configuration for Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Gmail SMTP server
+EMAIL_PORT = 587  # Gmail SMTP port
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'yashpatel26042004@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'qsfw vmxu ovnl jopy'  # Your Gmail app password
+DEFAULT_FROM_EMAIL = 'yashpatel26042004@gmail.com'

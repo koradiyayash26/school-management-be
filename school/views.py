@@ -22,6 +22,18 @@ from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import MergedCell
 from standard.models import AcademicYear
 
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.models import Group, User
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+import uuid
+from django.core.cache import cache
+import datetime  # Add this import at the top
+
 
 
 
@@ -853,5 +865,431 @@ class FeeTypeReportExcelViewSingle(APIView):
         except Exception as e:
             return JsonResponse(
                 {'message': 'An error occurred', 'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# email
+
+class PermissionRequestView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get request_id from query parameters
+            request_id = request.query_params.get('request_id')
+            
+            if request_id:
+                # Get specific request status
+                cache_key = f'permission_request_{request_id}'
+                request_data = cache.get(cache_key)
+                
+                if not request_data:
+                    return Response({
+                        'message': 'Permission request not found or expired',
+                        'status': 'expired',
+                        'request_id': request_id
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                try:
+                    group = Group.objects.get(name=request_data['group_name'])
+                    user = User.objects.get(id=request_data['user_id'])
+                    
+                    # Check if user has the permission
+                    has_permission = group in user.groups.all()
+                    current_status = 'approved' if has_permission else request_data['status']
+                    
+                    return Response({
+                        'message': 'Permission request status retrieved',
+                        'details': {
+                            'request_id': request_id,
+                            'status': current_status,
+                            'user': user.email,
+                            'group': group.name,
+                            'reason': request_data.get('reason', ''),
+                            'submitted_at': request_data.get('submitted_at', ''),
+                            'admin_emails': request_data.get('admin_emails', []),
+                            'has_permission': has_permission
+                        }
+                    }, status=status.HTTP_200_OK)
+                    
+                except (Group.DoesNotExist, User.DoesNotExist):
+                    return Response({
+                        'message': 'Associated group or user not found',
+                        'status': request_data['status']
+                    }, status=status.HTTP_200_OK)
+
+            # Get available groups and admin users
+            groups = Group.objects.all().values('name', 'permissions__name').distinct()
+            admin_users = User.objects.filter(is_staff=True).values('id', 'email', 'username')
+
+            # Format groups data
+            formatted_groups = {}
+            for group in groups:
+                group_name = group['name']
+                if group_name not in formatted_groups:
+                    formatted_groups[group_name] = {
+                        'name': group_name,
+                        'permissions': []
+                    }
+                if group['permissions__name']:
+                    formatted_groups[group_name]['permissions'].append(group['permissions__name'])
+
+            return Response({
+                'groups': list(formatted_groups.values()),
+                'admin_users': admin_users
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        try:
+            group_name = request.data.get('group_name')
+            admin_ids = request.data.get('admin_ids', [])
+            reason = request.data.get('reason', '')
+
+            if not group_name:
+                return Response(
+                    {'error': 'Group name is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                group = Group.objects.get(name=group_name)
+            except Group.DoesNotExist:
+                return Response(
+                    {'error': 'Group does not exist'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Check if user already has this group
+            if group in request.user.groups.all():
+                return Response({
+                    'message': 'You already have this group permission',
+                    'details': {
+                        'user': request.user.email,
+                        'group': group.name,
+                        'status': 'approved',
+                        'has_permission': True,
+                        'permissions': list(group.permissions.values_list('name', flat=True))
+                    }
+                }, status=status.HTTP_200_OK)
+
+            # Get admin emails
+            admin_emails = []
+            if admin_ids:
+                admin_emails = User.objects.filter(
+                    id__in=admin_ids,
+                    is_staff=True
+                ).values_list('email', flat=True)
+            else:
+                admin_emails = User.objects.filter(
+                    is_staff=True
+                ).values_list('email', flat=True)
+
+            if not admin_emails:
+                return Response(
+                    {'error': 'No admin users found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Generate unique request ID
+            request_id = str(uuid.uuid4())
+            
+            # Store request data in cache
+            cache_data = {
+                'user_id': request.user.id,
+                'group_name': group.name,
+                'status': 'pending',
+                'reason': reason,
+                'admin_emails': list(admin_emails),
+                'submitted_at': datetime.datetime.now().isoformat()
+            }
+            
+            # Store the request data with group name
+            cache.set(f'permission_request_{request_id}', cache_data, 60 * 60 * 48)
+            cache.set(f'user_requests_{request.user.id}_{group.name}', request_id, 60 * 60 * 48)
+
+            # Generate approval/decline URLs
+            base_url = request.build_absolute_uri('/')[:-1]
+            approve_url = f"{base_url}/permission-request/approve/{request_id}/"
+            decline_url = f"{base_url}/permission-request/decline/{request_id}/"
+
+            # Send email
+            subject = f'Permission Request from {request.user.email}'
+            message = f"""
+            User Details:
+            - Email: {request.user.email}
+            - Username: {request.user.username}
+            
+            Has requested access to group: {group.name}
+            
+            Group Permissions:
+            {', '.join(group.permissions.values_list('name', flat=True))}
+            
+            Reason for request: {reason}
+            
+            Actions:
+            - Approve: {approve_url}
+            - Decline: {decline_url}
+            
+            This request will expire in 48 hours.
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                list(admin_emails),
+                fail_silently=False,
+            )
+
+            return Response({
+                'message': 'Permission request sent successfully',
+                'details': {
+                    'request_id': request_id,
+                    'group': group.name,
+                    'admin_emails': list(admin_emails),
+                    'status': 'pending'
+                }
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+            
+            
+class ApprovePermissionView(APIView):
+    def get(self, request, request_id):
+        try:
+            # Get request data from cache
+            cache_key = f'permission_request_{request_id}'
+            request_data = cache.get(cache_key)
+
+            if not request_data:
+                return Response(
+                    {'error': 'Permission request not found or expired'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if request_data['status'] != 'pending':
+                return Response(
+                    {'error': 'This request has already been processed'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                # Get user and group using name instead of id
+                user = User.objects.get(id=request_data['user_id'])
+                group = Group.objects.get(name=request_data['group_name'])
+
+                # Check if user already has this group
+                if group in user.groups.all():
+                    return Response({
+                        'message': 'User already has this permission',
+                        'details': {
+                            'user': user.email,
+                            'group': group.name,
+                            'status': 'approved'
+                        }
+                    }, status=status.HTTP_200_OK)
+
+                # Add user to group
+                user.groups.add(group)
+                
+                # Update cache status
+                request_data['status'] = 'approved'
+                cache.set(cache_key, request_data, 60 * 60 * 48)
+
+                # Send confirmation email to user and all admins
+                subject = 'Permission Request Approved'
+                user_message = f"""
+                Your request for access to group '{group.name}' has been approved.
+                
+                You now have access to the following permissions:
+                {', '.join(group.permissions.values_list('name', flat=True))}
+                """
+                
+                admin_message = f"""
+                The permission request from {user.email} for group '{group.name}' has been approved.
+                
+                Request Details:
+                - User: {user.email}
+                - Group: {group.name}
+                - Reason: {request_data.get('reason', 'No reason provided')}
+                - Permissions Granted: {', '.join(group.permissions.values_list('name', flat=True))}
+                """
+                
+                # Send to user
+                send_mail(
+                    subject,
+                    user_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+
+                # Send to admins
+                send_mail(
+                    subject,
+                    admin_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    request_data['admin_emails'],
+                    fail_silently=False,
+                )
+
+                return Response({
+                    'message': 'Permission request approved successfully',
+                    'details': {
+                        'user': user.email,
+                        'group': group.name,
+                        'status': 'approved',
+                        'permissions': list(group.permissions.values_list('name', flat=True))
+                    }
+                }, status=status.HTTP_200_OK)
+
+            except User.DoesNotExist:
+                return Response(
+                    {'error': 'User not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Group.DoesNotExist:
+                return Response(
+                    {'error': 'Group not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class DeclinePermissionView(APIView):
+    def get(self, request, request_id):
+        try:
+            # Get request data from cache
+            cache_key = f'permission_request_{request_id}'
+            request_data = cache.get(cache_key)
+
+            if not request_data:
+                return Response(
+                    {'error': 'Permission request not found or expired'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if request_data['status'] != 'pending':
+                return Response({
+                    'message': 'This request has already been processed',
+                    'details': {
+                        'status': request_data['status'],
+                        'note': 'Permission was already handled'
+                    }
+                }, status=status.HTTP_200_OK)
+
+            # Get user and group
+            try:
+                user = User.objects.get(id=request_data['user_id'])
+                group = Group.objects.get(id=request_data['group_id'])
+                
+                # Check if user already has this group
+                if group in user.groups.all():
+                    return Response({
+                        'message': 'Group permission already exists',
+                        'details': {
+                            'user': user.email,
+                            'group': group.name,
+                            'status': 'already_exists',
+                            'note': 'User already has this group permission'
+                        }
+                    }, status=status.HTTP_200_OK)
+
+                # Assign the group to the user
+                user.groups.add(group)
+                user.save()
+
+                # Verify the group was assigned
+                if group not in user.groups.all():
+                    raise Exception("Failed to assign group to user")
+
+                # Update cache status
+                request_data['status'] = 'approved'
+                cache.set(cache_key, request_data, 60 * 60 * 48)
+
+                # Send confirmation emails
+                subject = 'Permission Request Approved'
+                user_message = f"""
+                Your request for access to group '{group.name}' has been approved.
+                
+                You now have access to the requested permissions.
+                Group Details:
+                - Group Name: {group.name}
+                - Permissions Granted: {', '.join(group.permissions.values_list('name', flat=True))}
+                """
+                
+                admin_message = f"""
+                New permission has been granted successfully.
+                
+                Details:
+                - User: {user.email} ({user.username})
+                - Group: {group.name}
+                - Reason: {request_data.get('reason', 'No reason provided')}
+                - Status: Successfully assigned
+                """
+                
+                # Send emails
+                send_mail(
+                    subject,
+                    user_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+
+                send_mail(
+                    subject,
+                    admin_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    request_data['admin_emails'],
+                    fail_silently=False,
+                )
+
+                return Response({
+                    'message': 'New group permission assigned successfully',
+                    'details': {
+                        'user': user.email,
+                        'group': group.name,
+                        'status': 'newly_approved',
+                        'permissions_granted': list(group.permissions.values_list('name', flat=True))
+                    }
+                }, status=status.HTTP_200_OK)
+
+            except User.DoesNotExist:
+                return Response(
+                    {'error': 'User not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Group.DoesNotExist:
+                return Response(
+                    {'error': 'Group not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Exception as e:
+                return Response(
+                    {'error': f'Failed to assign group: {str(e)}'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
