@@ -104,31 +104,65 @@ class ChangePasswordView(generics.UpdateAPIView):
         user.save()
         return Response({"detail": "Password updated successfully"})
     
-class ChangeUsernameView(generics.UpdateAPIView):
-    queryset = User.objects.all()
+    
+class ChangeUsernameEmailView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
-
     permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+
     def update(self, request, *args, **kwargs):
         user = request.user
-        user.username = request.data.get("new_username")
-        user.save()
-        return Response({"detail": "Username updated successfully"})
+        new_username = request.data.get("new_username")
+        new_email = request.data.get("new_email")
 
+        # Check if at least one field is provided
+        if not new_username and not new_email:
+            return Response({
+                "error": "Please provide either new username or new email or both."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_fields = []
+
+        if new_username:
+            # Check if username already exists
+            if User.objects.filter(username=new_username).exclude(id=user.id).exists():
+                return Response({
+                    "error": "Username already taken. Please choose a different username."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            user.username = new_username
+            updated_fields.append("username")
+
+        if new_email:
+            # Validate email
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                return Response({
+                    "error": "Email already registered. Please use a different email."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            user.email = new_email
+            updated_fields.append("email")
+
+        user.save()
+        return Response({
+            "detail": f"Successfully updated {' and '.join(updated_fields)}",
+            "username": user.username,
+            "email": user.email
+        })
+        
+        
 class GetUserProfileUsername(APIView):
     authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
 
     def get(self, request):
-        token_key = request.query_params.get('token')
-        if not token_key:
-            return JsonResponse({"detail": "Token not provided."}, status=400)
-
-        try:
-            token = Token.objects.get(key=token_key)
-            username = token.user.username
-        except Token.DoesNotExist:
+        # Since we're using JWT, we can directly get the username from the authenticated user
+        if not request.user.is_authenticated:
             raise AuthenticationFailed("Invalid token")
 
-        return JsonResponse({"message": "Token verification successful", "username": username}, status=200)
+        return JsonResponse({
+            "message": "Token verification successful", 
+            "username": request.user.username,
+            "email": request.user.email
+        }, status=200)
     
     

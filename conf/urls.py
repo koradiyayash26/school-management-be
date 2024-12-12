@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from .auth import AuthTokenVerify,ChangePasswordView,ChangeUsernameView,GetUserProfileUsername,CustomAuthToken
+from .auth import AuthTokenVerify,ChangePasswordView,ChangeUsernameEmailView,GetUserProfileUsername,CustomAuthToken
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -37,10 +37,10 @@ urlpatterns = [
    path('api-auth/', include('rest_framework.urls')),
    path('api-token-verify/', AuthTokenVerify.as_view(), name='api-token-verify'),
    path('api-auth/change-password/',ChangePasswordView.as_view(), name='change_password'),
-   path('api-auth/change-username/',ChangeUsernameView.as_view(), name='change_username'),
+   path('api-auth/change-username/',ChangeUsernameEmailView.as_view(), name='change_username'),
    path('api-auth/user-profile-username/',GetUserProfileUsername.as_view(), name='get_userprofile_username'),
    
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+   path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+   path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
    
 ]
