@@ -13,6 +13,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.utils import timezone  # Add this import
+
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -26,6 +29,8 @@ class CustomAuthToken(ObtainAuthToken):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+        user.last_login = timezone.now()
+        user.save()
         jwt_token = get_tokens_for_user(user)
         return Response({
             'user_id': user.pk,
