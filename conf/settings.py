@@ -30,15 +30,15 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG',cast=bool)
 
 # ALLOWED_HOSTS = []
-try:
-    ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
-except:
-    # Fallback if env variable is not properly set
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'school-management-be-2.onrender.com', '*']
+# try:
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+# except:
+#     # Fallback if env variable is not properly set
+#     ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'school-management-be-2.onrender.com', '*']
 
-# For development
-if DEBUG:
-    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
+# # For development
+# if DEBUG:
+#     ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
 
 CORS_ALLOW_ALL_ORIGINS = True
 
