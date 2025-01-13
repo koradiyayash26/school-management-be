@@ -34,8 +34,12 @@ DEBUG = config('DEBUG',cast=bool)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-ALLOWED_HOSTS=['127.0.0.1','school-management-fe.vercel.app','school-management-be-2.onrender.com']
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'school-management-fe.vercel.app',
+    'school-management-be-2.onrender.com'
+]
 
 # Application definition
 
@@ -86,12 +90,15 @@ CORS_ALLOW_HEADERS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your frontend URL
     'https://school-management-fe.vercel.app'
 ]
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = not DEBUG
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -164,10 +171,11 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'conf.urls'
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Adjust this to match your React.js app's URL
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:8000',
     'https://school-management-fe.vercel.app',
-    "https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app",
-    "https://school-management-75vghc1ge-yashs-projects-5692f090.vercel.app"
 ]
 
 TEMPLATES = [
@@ -201,13 +209,13 @@ DATABASES = {
     }
 }
 
-# if DEBUG:
-#     DATABASES['default'] = {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# else:
-DATABASES['default'].update(dj_database_url.config(
+if DEBUG:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+else:
+    DATABASES['default'].update(dj_database_url.config(
         default=config('DATABASE_URL'),
         conn_max_age=600,
         ssl_require=True
