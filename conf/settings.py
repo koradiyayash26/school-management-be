@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 import dj_database_url
-from decouple import config,Csv
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,20 +30,7 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG',cast=bool)
 
 # ALLOWED_HOSTS = []
-# try:
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
-# except:
-#     # Fallback if env variable is not properly set
-#     ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'school-management-be-2.onrender.com', '*']
-
-# # For development
-# if DEBUG:
-#     ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
-
-CORS_ALLOW_ALL_ORIGINS = True
-
-
-
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -96,9 +83,7 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_CREDENTIALS = True
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:8000/',
-    'https://school-management-fe.vercel.app'# Your frontend URL
+    'http://localhost:5173'  # Your frontend URL
 ]
 
 
