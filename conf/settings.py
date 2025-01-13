@@ -83,7 +83,8 @@ CORS_ALLOW_HEADERS = [
 CORS_ALLOW_CREDENTIALS = True
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173'  # Your frontend URL
+    'http://localhost:5173',  # Your frontend URL
+    'https://school-management-fe.vercel.app'
 ]
 
 
