@@ -667,6 +667,7 @@ class StudentGet(APIView):
             'middle_name',
             'mother_name',
             'gender',
+            'roll_no',
             'birth_date',
             'birth_place',
             'mobile_no',
