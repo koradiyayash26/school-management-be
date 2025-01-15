@@ -62,14 +62,6 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'conf.asgi.application'
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
-#         },
-#     },
-# }
 
 CHANNEL_LAYERS = {
     "default": {
@@ -205,17 +197,23 @@ DATABASES = {
     }
 }
 
-# if config('DEBUG'):
-#     DATABASES['default'] = {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# else:
-DATABASES['default'].update(dj_database_url.config(
-        default=config('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    ))
+DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+USE_PRODUCTION_DB = os.getenv('USE_PRODUCTION_DB', 'False').lower() == 'true'
+
+if USE_PRODUCTION_DB:
+    DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
+
+# DATABASES['default'].update(dj_database_url.config(
+#         default=config('DATABASE_URL'),
+#         conn_max_age=600,
+#         ssl_require=True
+#     ))
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
