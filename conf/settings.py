@@ -204,9 +204,8 @@ DATABASES = {
         }
     }
 
-USE_PRODUCTION_DB = os.getenv('USE_PRODUCTION_DB', 'False').lower() == 'true'
 
-if USE_PRODUCTION_DB:
+if not os.name == "nt":
     DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
 
 # DATABASES['default'].update(dj_database_url.config(
