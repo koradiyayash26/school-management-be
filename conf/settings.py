@@ -30,8 +30,7 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG',cast=bool)
 
 # ALLOWED_HOSTS = []
-# ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -62,8 +61,7 @@ INSTALLED_APPS = [
 ]
 
 ASGI_APPLICATION = 'conf.asgi.application'
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_ALL_ORIGINS = True
+
 # CHANNEL_LAYERS = {
 #     'default': {
 #         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -208,7 +206,7 @@ DATABASES = {
 }
 
 # if config('DEBUG'):
-# DATABASES['default'] = {
+#     DATABASES['default'] = {
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
