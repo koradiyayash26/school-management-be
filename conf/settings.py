@@ -202,8 +202,10 @@ DATABASES = {
 # Replace the current database configuration with this:
 if config('ENVIRONMENT', default='local') == 'local':
     DATABASES = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'default': {  # Make sure 'default' is a dictionary
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
 else:
     DATABASES = {
