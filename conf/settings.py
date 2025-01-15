@@ -199,17 +199,20 @@ DATABASES = {
     }
 }
 
-if config('DEBUG', default=False, cast=bool):
-    DATABASES['default'] = {
+# Replace the current database configuration with this:
+if config('ENVIRONMENT', default='local') == 'local':
+    DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 else:
-    DATABASES['default'].update(dj_database_url.config(
-        default=config('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    ))
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
