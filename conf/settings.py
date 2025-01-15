@@ -29,8 +29,10 @@ SECRET_KEY = config('SECRET_KEY')
 # DEBUG = True
 DEBUG = config('DEBUG',cast=bool)
 
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
+ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(",")
+
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
