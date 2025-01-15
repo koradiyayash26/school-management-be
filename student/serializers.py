@@ -52,6 +52,7 @@ class ExamMarkAssingDataSerializer(serializers.ModelSerializer):
     first_name = serializers.SerializerMethodField()
     middle_name = serializers.SerializerMethodField()
     last_name = serializers.SerializerMethodField()
+    roll_no = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamMarkAssingData
@@ -65,6 +66,10 @@ class ExamMarkAssingDataSerializer(serializers.ModelSerializer):
 
     def get_last_name(self, obj):
         return obj.student.last_name if obj.student else None
+    
+    def get_roll_no(self, obj):
+        return obj.student.roll_no if obj.student else None
+    
 
 class StudentUpdateHistorySerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()

@@ -673,6 +673,7 @@ class StudentGet(APIView):
             'address',
             'city',
             'district',
+            'roll_no',
             'standard',
             'section',
             'academic_year__year', 
