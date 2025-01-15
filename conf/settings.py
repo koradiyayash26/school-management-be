@@ -64,20 +64,25 @@ INSTALLED_APPS = [
 ASGI_APPLICATION = 'conf.asgi.application'
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
-#         },
-#     },
-# }
 
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [config('REDIS_URL', default='redis://localhost:6379')],
+        },
+    },
 }
+CSRF_TRUSTED_ORIGINS = [
+    'https://school-management-be-2.onrender.com',
+    'https://school-management-fe.vercel.app'
+]
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels.layers.InMemoryChannelLayer"
+#     }
+# }
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -95,7 +100,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your frontend URL
-    'https://school-management-fe.vercel.app'
+    'https://school-management-fe.vercel.app',
+    'wss://school-management-be-2.onrender.com',  # Add Render WebSocket URL
+    'https://school-management-be-2.onrender.com'
 ]
 
 
