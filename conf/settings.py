@@ -87,7 +87,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your frontend URL
-    'https://school-management-fe.vercel.app'
+    'https://school-management-fe.vercel.app',
+    'https://school-management-fe.onrender.com',
 ]
 
 
@@ -165,7 +166,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Adjust this to match your React.js app's URL
     'https://school-management-fe.vercel.app',
     "https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app",
-    "https://school-management-75vghc1ge-yashs-projects-5692f090.vercel.app"
+    "https://school-management-75vghc1ge-yashs-projects-5692f090.vercel.app",
+    'https://school-management-fe.onrender.com',
 ]
 
 TEMPLATES = [
