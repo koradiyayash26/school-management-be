@@ -105,7 +105,7 @@ class Students(models.Model):
     district = models.CharField(max_length=50, null=True, blank=False)
 
     standard = models.CharField(max_length=14, choices=STD_CHOICES)
-    roll_no = models.IntegerField(null=True, blank=True)
+    roll_no = models.CharField(max_length=100, null=True, blank=True)
     section = models.CharField(max_length=2, choices=SECTION_CHOICES, null=True, blank=True)
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
 
