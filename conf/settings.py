@@ -165,7 +165,7 @@ ROOT_URLCONF = 'conf.urls'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Adjust this to match your React.js app's URL
     'https://school-management-fe.vercel.app',
-    'https://school-management-fe.onrender.com/login',
+    'https://school-management-fe.onrender.com',
     "https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app",
     "https://school-management-75vghc1ge-yashs-projects-5692f090.vercel.app"
 ]
