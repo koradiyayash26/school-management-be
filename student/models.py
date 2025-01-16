@@ -144,14 +144,7 @@ class Students(models.Model):
     class Meta:
         db_table = 'students'
         verbose_name = "Student"
-        verbose_name_plural = "Students"
-        permissions = [
-            ("can_view_students", "Can view students list"),
-            ("can_view_student_details", "Can view student details"),
-            ("can_add_student", "Can add student"),
-            ("can_edit_student", "Can edit student"),
-            ("can_delete_student", "Can delete student"),
-        ]  
+        verbose_name_plural = "Students"  
     
 class SchoolStudent(models.Model):
     student = models.ForeignKey(to=Students, on_delete=models.SET_NULL, null=True)

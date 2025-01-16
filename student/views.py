@@ -599,9 +599,7 @@ class ExportGeneralRegisterToExcel(APIView):
 # permission for student for group
 class HasStudentPermission(BasePermission):
     def has_permission(self, request, view):
-        if not hasattr(view, 'required_permission'):
-            return False
-        return request.user.has_perm(view.required_permission)
+        return request.user.has_perm(f'student.{view.required_permission}')
 
 class StudentAdd(APIView):
     authentication_classes = [JWTAuthentication]
@@ -638,7 +636,7 @@ class StudentAdd(APIView):
 class StudentGet(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, HasStudentPermission]
-    required_permission = 'student.can_view_students'
+    required_permission = 'can_view_students'
 
     def get(self, request):
         # Get query parameters
