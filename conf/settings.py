@@ -67,10 +67,7 @@ ASGI_APPLICATION = 'conf.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [config('REDIS_URL', default='redis://localhost:6379')],
-        },
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
 
@@ -90,8 +87,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 SOCKETIO_CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your frontend URL
-    'https://school-management-fe.vercel.app',
-    'https://school-management-fe.onrender.com'
+    'https://school-management-fe.vercel.app'
 ]
 
 
@@ -168,7 +164,6 @@ ROOT_URLCONF = 'conf.urls'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Adjust this to match your React.js app's URL
     'https://school-management-fe.vercel.app',
-    'https://school-management-fe.onrender.com',
     "https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app",
     "https://school-management-75vghc1ge-yashs-projects-5692f090.vercel.app"
 ]
@@ -278,24 +273,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'yashpatel26042004@gmail.com'  # Your Gmail address
 EMAIL_HOST_PASSWORD = 'qsfw vmxu ovnl jopy'  # Your Gmail app password
 DEFAULT_FROM_EMAIL = 'yashpatel26042004@gmail.com'
-
-# Add these settings for WebSocket
-CSRF_TRUSTED_ORIGINS = [
-    'https://school-management-fe.vercel.app',
-    'https://school-management-fe.onrender.com',
-    'https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app',
-    'https://school-management-fe-75vghc1ge-yashs-projects-5692f090.vercel.app'
-]
-
-# Update CORS settings to explicitly allow WebSocket
-CORS_ALLOW_ALL_ORIGINS = False  # Set this to False for security
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'https://school-management-fe.vercel.app',
-    'https://school-management-fe.onrender.com',
-    'https://school-management-fe-git-main-yashs-projects-5692f090.vercel.app',
-    'https://school-management-fe-75vghc1ge-yashs-projects-5692f090.vercel.app'
-]
-
-# Add WebSocket specific CORS settings
-CHANNEL_LAYERS_CORS_ORIGINS = CORS_ALLOWED_ORIGINS
