@@ -14,6 +14,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.utils import timezone  # Add this import
+from django.contrib.auth import authenticate
 
 
 
@@ -26,12 +27,33 @@ def get_tokens_for_user(user):
 
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username or not password:
+            return Response({
+                'error': 'Please provide both username and password'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if user exists
+        user_exists = User.objects.filter(username=username).exists()
+        if not user_exists:
+            return Response({
+                'username': 'Please enter a valid username'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Try to authenticate with provided credentials
+        user = authenticate(username=username, password=password)
+        if not user:
+            return Response({
+                'password': 'Wrong password'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Authentication successful, proceed with token generation
         user.last_login = timezone.now()
         user.save()
         jwt_token = get_tokens_for_user(user)
+        
         return Response({
             'user_id': user.pk,
             'email': user.email,
