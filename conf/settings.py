@@ -192,14 +192,29 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-            'sslmode': 'require',
-        }
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#         }
+#     }
+# }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'postgres',
+#         'PASSWORD': '8780',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#         },
+#     }
+# }
+
 
 DATABASES = {
         'default': {
@@ -209,8 +224,8 @@ DATABASES = {
     }
 
 
-if not os.name == "nt":
-    DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
+# if not os.name == "nt":
+#     DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
 
 # DATABASES['default'].update(dj_database_url.config(
 #         default=config('DATABASE_URL'),
