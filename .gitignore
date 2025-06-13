@@ -14,3 +14,4 @@ staticfiles/
 /dev.env
 myworld/
 env/
+venv
