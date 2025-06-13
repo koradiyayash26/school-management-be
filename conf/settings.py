@@ -219,15 +219,15 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 ENVIRONMENT = config('ENVIRONMENT', default='development')
 
 # Database configuration
-if ENVIRONMENT == 'development':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:  # Production database
-    DATABASES = {
+# if ENVIRONMENT == 'development':
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
+# else:  # Production database
+DATABASES = {
         'default': dj_database_url.config(
             default=config('DATABASE_URL'),
             conn_max_age=600,
