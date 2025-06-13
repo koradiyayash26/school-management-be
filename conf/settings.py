@@ -216,22 +216,23 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 # }
 
 
-# DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
 
+if os.name == 'nt':
+    DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+else:
+    DATABASES['default'].update(dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        ))
+# if not os.name == "nt":
+#     DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
 
-if not os.name == "nt":
-    DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
-
-# DATABASES['default'].update(dj_database_url.config(
-#         default=config('DATABASE_URL'),
-#         conn_max_age=600,
-#         ssl_require=True
-#     ))
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
