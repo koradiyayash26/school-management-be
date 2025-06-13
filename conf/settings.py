@@ -228,12 +228,19 @@ ENVIRONMENT = config('ENVIRONMENT', default='development')
 #     }
 # else:  # Production database
 DATABASES = {
-        'default': dj_database_url.config(
-            default=config('DATABASE_URL'),
-            conn_max_age=600,
-            ssl_require=True
-        )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'school_database_1g40',
+        'USER': 'school_database_1g40_user',
+        'PASSWORD': 'cMZQloH4uf8yAvEQl0caS4BU2Aseoelw',
+        'HOST': 'dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com',
+        'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        }
     }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
