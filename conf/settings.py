@@ -192,14 +192,6 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'OPTIONS': {
-#             'sslmode': 'require',
-#         }
-#     }
-# }
 
 # DATABASES = {
 #     'default': {
@@ -216,30 +208,22 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 # }
 
 
-ENVIRONMENT = config('ENVIRONMENT', default='development')
-
-# Database configuration
-# if ENVIRONMENT == 'development':
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
-# else:  # Production database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_database_1g40',
-        'USER': 'school_database_1g40_user',
-        'PASSWORD': 'cMZQloH4uf8yAvEQl0caS4BU2Aseoelw',
-        'HOST': 'dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-}
+
+
+# if not os.name == "nt":
+# DATABASES['default']= dj_database_url.parse("postgresql://school_database_1g40_user:cMZQloH4uf8yAvEQl0caS4BU2Aseoelw@dpg-cu3rhml2ng1s73cdqeog-a.oregon-postgres.render.com/school_database_1g40")
+
+DATABASES['default'].update(dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    ))
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
